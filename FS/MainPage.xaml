@@ -23,12 +23,19 @@
                 Style="{StaticResource SubHeadline}"
                 SemanticProperties.HeadingLevel="Level2"
                 SemanticProperties.Description="Welcome to dot net Multi platform App U I" />
-
+            <ListView x:Name="FilesListView" />
             <Button
                 x:Name="CounterBtn"
                 Text="Click me" 
                 SemanticProperties.Hint="Counts the number of times you click"
                 Clicked="OnCounterClicked"
+                HorizontalOptions="Fill" />
+            
+            <Button
+                x:Name="SendFilesBtn"
+                Text="Send Files" 
+                SemanticProperties.Hint="Send the selected files"
+                Clicked="SendFiles"
                 HorizontalOptions="Fill" />
         </VerticalStackLayout>
     </ScrollView>

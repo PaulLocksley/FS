@@ -7,22 +7,30 @@ public partial class MainPage : ContentPage
 {
     int count = 0;
     private string o = "non loaded";
+    private FileSenderServer FSServer = new FileSenderServer();
+    public IDictionary<string, FileInfo> SelectedFiles = new Dictionary<string, FileInfo>();
     public MainPage()
     {
         InitializeComponent();
+        //FilesListView = new ListView();
+        FilesListView.ItemsSource = SelectedFiles.Keys;
+
     }
 
     private void OnCounterClicked(object sender, EventArgs e)
     {
         count++;
-        PickAndShow();
-        if (count == 1)
+        var k = PickAndShow();
+     
+        //CounterBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}"); 
+
+        /*if (count == 1)
             CounterBtn.Text = $"Clicked {count} time {o}";
         else
-            CounterBtn.Text = $"Clicked {count} times {o}";
-
+            CounterBtn.Text = $"Clicked {count} times {o}";*/
         SemanticScreenReader.Announce(CounterBtn.Text);
     }
+    
     public async Task<FileResult> PickAndShow()
     {
         try
@@ -30,11 +38,13 @@ public partial class MainPage : ContentPage
             var result = await FilePicker.Default.PickAsync(new PickOptions());
             if (result != null)
             {
-                    using var stream = await result.OpenReadAsync();
-                    var j = new FileInfo(result.FullPath);
-                    var m = new byte[j.Length];
-                    stream.Read(m);
-                    o = Encoding.ASCII.GetString(m);
+                    SelectedFiles[result.FullPath] = new FileInfo(result.FullPath);
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        FilesListView.ItemsSource = SelectedFiles.Keys;
+                        CounterBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}");
+                    });
+
             }
 
             return result;
@@ -44,6 +54,15 @@ public partial class MainPage : ContentPage
             // The user canceled or something went wrong
         }
 
+        //CounterBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}"); 
         return null;
+    }
+
+    private void SendFiles(object? sender, EventArgs eventArgs)
+    {
+        FSServer.testTransfer(SelectedFiles.Select(x => x.Value).ToArray());
+        SendFilesBtn.Text = "Complete";
+        CounterBtn.Text = "Select Files";
+        SelectedFiles = new Dictionary<string, FileInfo>();
     }
 }

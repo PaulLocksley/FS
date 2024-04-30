@@ -22,17 +22,8 @@
      [JsonPropertyName("message")]
      public string Message { get; set; }
 
-     [JsonPropertyName("created")]
-     public Created Created { get; set; }
-
-     [JsonPropertyName("expires")]
-     public Expires Expires { get; set; }
-
-     [JsonPropertyName("expiry_date_extension")]
-     public long ExpiryDateExtension { get; set; }
-
      [JsonPropertyName("options")]
-     public Options Options { get; set; }
+     public IDictionary<string,bool>? Options { get; set; }
 
      [JsonPropertyName("salt")]
      public string Salt { get; set; }
@@ -41,38 +32,16 @@
      public string Roundtriptoken { get; set; }
 
      [JsonPropertyName("files")]
-     public Transfer_File[] Files { get; set; }
+     public TransferFile[] Files { get; set; }
 
      [JsonPropertyName("recipients")]
      public Recipient[] Recipients { get; set; }
  }
 
- public partial class Created
- {
-     [JsonPropertyName("raw")]
-     public long Raw { get; set; }
-
-     [JsonPropertyName("formatted")]
-     public string Formatted { get; set; }
- }
-
- public partial class Expires
- {
-     [JsonPropertyName("raw")]
-     [JsonConverter(typeof(ParseStringConverter))]
-     public long Raw { get; set; }
-
-     [JsonPropertyName("formatted")]
-     public string Formatted { get; set; }
- }
-
- public partial class Transfer_File
+ public partial class TransferFile
  {
      [JsonPropertyName("id")]
      public long Id { get; set; }
-
-     [JsonPropertyName("transfer_id")]
-     public long TransferId { get; set; }
 
      [JsonPropertyName("uid")]
      public Guid Uid { get; set; }
@@ -84,29 +53,8 @@
      [JsonConverter(typeof(ParseStringConverter))]
      public long Size { get; set; }
 
-     [JsonPropertyName("sha1")]
-     public object Sha1 { get; set; }
-
      [JsonPropertyName("cid")]
-     public Guid Cid { get; set; }
- }
-
- public partial class Options
- {
-     [JsonPropertyName("get_a_link")]
-     public bool GetALink { get; set; }
-
-     [JsonPropertyName("add_me_to_recipients")]
-     public bool AddMeToRecipients { get; set; }
-
-     [JsonPropertyName("email_recipient_when_transfer_expires")]
-     public bool EmailRecipientWhenTransferExpires { get; set; }
-
-     [JsonPropertyName("hide_sender_email")]
-     public bool HideSenderEmail { get; set; }
-
-     [JsonPropertyName("encryption")]
-     public bool Encryption { get; set; }
+     public String? Cid { get; set; }
  }
 
  public partial class Recipient
@@ -123,8 +71,6 @@
      [JsonPropertyName("email")]
      public string Email { get; set; }
 
-     [JsonPropertyName("created")]
-     public Created Created { get; set; }
 
      [JsonPropertyName("last_activity")]
      public object LastActivity { get; set; }
