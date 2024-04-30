@@ -114,7 +114,7 @@ public class FileSenderServer
         throw new NotImplementedException();
     }
 
-    public async void testTransfer(FileInfo[] files)
+    public async void testTransfer((FileInfo,Task<Stream>)[] files)
     {
         var v = await Call(HttpVerb.Get,"/transfer", new Dictionary<string, string>(),null,null, new Dictionary<string, string>());
         var boddy = await v.Content.ReadAsStringAsync();
@@ -123,15 +123,15 @@ public class FileSenderServer
         var tc = new Dictionary<string, object>();
         tc["from"] = "john@locksley.dev";
 
-        var backTrace = new Dictionary<string, FileInfo>();
+        var backTrace = new Dictionary<string, (FileInfo,Task<Stream>)>();
         
         var filesObject = new List<Dictionary<string,string>>();
         foreach (var f_info in files)
         {
             var tmpFile = new Dictionary<string, string>();
-            tmpFile["name"] = f_info.Name;
-            tmpFile["size"] = f_info.Length.ToString();
-            tmpFile["mime_type"] = MimeTypesMap.GetMimeType(f_info.Name);
+            tmpFile["name"] = f_info.Item1.Name;
+            tmpFile["size"] = f_info.Item1.Length.ToString();
+            tmpFile["mime_type"] = MimeTypesMap.GetMimeType(f_info.Item1.Name);
 
             tmpFile["cid"] = Guid.NewGuid().ToString();
             backTrace[tmpFile["cid"]] = f_info;
@@ -160,14 +160,19 @@ public class FileSenderServer
 
         foreach (var f in za.Files)
         {
-            var f_path = backTrace[f.Cid].FullName;
+            var f_path = backTrace[f.Cid].Item1.FullName;
             var f_size = new FileInfo(f_path).Length;
-            var f_pointer = File.OpenRead(f_path);
+
             for (long i = 0; i < f_size; i += ChunkSize)
             {
-                var readSize = ChunkSize < (f_size - i) ? ChunkSize : unchecked((int)(f_size - i)) ;
-                var f_content = new byte[readSize];
-                f_pointer.Read(f_content,0,readSize);
+                var f_content = new byte[ChunkSize];
+                var readTask = backTrace[f.Cid].Item2.Result;
+                var readSize = readTask.Read(f_content, 0, ChunkSize);
+
+                if (readSize != ChunkSize)
+                {
+                    f_content = f_content.Take(readSize).ToArray();
+                }
                 var pac = await Call(HttpVerb.Put,
                     $"/file/{f.Id}/chunk/{i}",
                     new Dictionary<string, string>

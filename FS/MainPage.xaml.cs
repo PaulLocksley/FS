@@ -8,7 +8,7 @@ public partial class MainPage : ContentPage
     int count = 0;
     private string o = "non loaded";
     private FileSenderServer FSServer = new FileSenderServer();
-    public IDictionary<string, FileInfo> SelectedFiles = new Dictionary<string, FileInfo>();
+    public IDictionary<string, (FileInfo,Task<Stream>)> SelectedFiles = new Dictionary<string,  (FileInfo,Task<Stream>)>();
     public MainPage()
     {
         InitializeComponent();
@@ -31,22 +31,22 @@ public partial class MainPage : ContentPage
         SemanticScreenReader.Announce(CounterBtn.Text);
     }
     
-    public async Task<FileResult> PickAndShow()
+    public async Task<IEnumerable<FileResult>> PickAndShow()
     {
         try
         {
-            var result = await FilePicker.Default.PickAsync(new PickOptions());
-            if (result != null)
+            var result = await FilePicker.Default.PickMultipleAsync(new PickOptions());
+            foreach (var fresult in result)
             {
-                    SelectedFiles[result.FullPath] = new FileInfo(result.FullPath);
-                    Device.BeginInvokeOnMainThread(() =>
-                    {
-                        FilesListView.ItemsSource = SelectedFiles.Keys;
-                        CounterBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}");
-                    });
-
+                var file_task = fresult.OpenReadAsync();
+                Console.WriteLine(file_task.Status);
+                SelectedFiles[fresult.FullPath] = (new FileInfo(fresult.FullPath),file_task);
+                Device.BeginInvokeOnMainThread(() =>
+                {
+                    FilesListView.ItemsSource = SelectedFiles.Keys;
+                    CounterBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}");
+                });
             }
-
             return result;
         }
         catch (Exception ex)
@@ -63,6 +63,6 @@ public partial class MainPage : ContentPage
         FSServer.testTransfer(SelectedFiles.Select(x => x.Value).ToArray());
         SendFilesBtn.Text = "Complete";
         CounterBtn.Text = "Select Files";
-        SelectedFiles = new Dictionary<string, FileInfo>();
+        SelectedFiles = new Dictionary<string,  (FileInfo,Task<Stream>)>();
     }
 }
