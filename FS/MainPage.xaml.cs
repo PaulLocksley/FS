@@ -38,7 +38,9 @@ public partial class MainPage : ContentPage
             var result = await FilePicker.Default.PickMultipleAsync(new PickOptions());
             foreach (var fresult in result)
             {
+                
                 var file_task = fresult.OpenReadAsync();
+                redo.Text = file_task.Result.Length.ToString();
                 Console.WriteLine(file_task.Status);
                 SelectedFiles[fresult.FullPath] = (new FileInfo(fresult.FullPath),file_task);
                 Device.BeginInvokeOnMainThread(() =>

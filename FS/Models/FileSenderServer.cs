@@ -130,7 +130,7 @@ public class FileSenderServer
         {
             var tmpFile = new Dictionary<string, string>();
             tmpFile["name"] = f_info.Item1.Name;
-            tmpFile["size"] = f_info.Item1.Length.ToString();
+            tmpFile["size"] = f_info.Item2.Result.Length.ToString();
             tmpFile["mime_type"] = MimeTypesMap.GetMimeType(f_info.Item1.Name);
 
             tmpFile["cid"] = Guid.NewGuid().ToString();
@@ -161,6 +161,7 @@ public class FileSenderServer
         foreach (var f in za.Files)
         {
             var f_path = backTrace[f.Cid].Item1.FullName;
+            
             var f_size = new FileInfo(f_path).Length;
 
             for (long i = 0; i < f_size; i += ChunkSize)
