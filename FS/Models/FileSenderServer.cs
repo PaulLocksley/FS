@@ -16,7 +16,8 @@ public class FileSenderServer
     private string apikey = "6822185aa4ad908bf9c7da9dcabdb57d0d7cb71edbf87d3da4a8a7c936c10f29";
     private bool insecure = true;
     private int ChunkSize = 5242880;
-
+    private SemaphoreSlim semaphore = new SemaphoreSlim(5);
+    private CountdownEvent countdown; 
     
     List<string> Flatten(IDictionary<string, string> data)
     {
@@ -127,6 +128,7 @@ public class FileSenderServer
         
         var backTrace = new Dictionary<string, (string MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
         var ilegalChars = Path.GetInvalidPathChars();
+        
         var filesObject = new List<Dictionary<string,string>>();
         foreach (var f_info in files)
         {
@@ -166,45 +168,19 @@ public class FileSenderServer
         }
         Debug.WriteLine($"Transfer obj {za}");
 
+        countdown = new CountdownEvent(za.Files.Aggregate(0,(i,f) => i + (int)Math.Ceiling(f.Size / (decimal)ChunkSize)));
 
         foreach (var f in za.Files)
         {
-            var f_path = backTrace[f.Cid].FullPath;
-            var f_size = backTrace[f.Cid].FileSize;
-            var tasks = new List<Task>();
-            for (long i = 0; i < f_size; i += ChunkSize)
+            for (long i = 0; i < f.Size; i += ChunkSize)
             {
-                Debug.WriteLine($"working on {i}");
-
-                var f_content = new byte[ChunkSize];
-                var readTask = backTrace[f.Cid].FileStream.Result;
-                var readSize = readTask.Read(f_content, 0, ChunkSize);
-
-                if (readSize != ChunkSize)
-                {
-                    f_content = f_content.Take(readSize).ToArray();
-                }
-
-                var t = Call(HttpVerb.Put,
-                    $"/file/{f.Id}/chunk/{i}",
-                    new Dictionary<string, string>
-                    {
-                        { "key", f.Uid.ToString() },
-                        { "roundtriptoken", za.Roundtriptoken }
-                    },
-                    null,
-                    f_content,
-                    new Dictionary<string, string> { { "Content-Type", "application/octet-stream" } });
-                Debug.WriteLine($"task status for {i} {t.Status}");
-                tasks.Add(t);
-                //var kkp = await pac.Content.ReadAsStringAsync();
-                //Console.WriteLine(kkp);
-                Debug.WriteLine($"reading {i}");
+                ThreadPool.QueueUserWorkItem(SendChunk,
+                    new object[] { backTrace[f.Cid!].FileStream, i, f, za.Roundtriptoken });
             }
+        }
 
-            Debug.WriteLine("Waiting for tasks");
-            await Task.WhenAll(tasks);
-            Debug.WriteLine("Done with tasks");
+        countdown.Wait();
+        foreach (var f in za.Files){
             var ppac = await Call(HttpVerb.Put,
                 $"/file/{f.Id}",
                 new Dictionary<string, string>
@@ -214,8 +190,7 @@ public class FileSenderServer
                 },
                 new Dictionary<string, object> { { "complete", true } },
                 null, new Dictionary<string, string>());
-            var kkkpppp = await ppac.Content.ReadAsStringAsync();
-            Console.WriteLine(kkkpppp);
+            ppac.EnsureSuccessStatusCode();
         }
 
         var jac = await Call(HttpVerb.Put,
@@ -235,5 +210,52 @@ public class FileSenderServer
     public static string CleanFileName(string name)
     {
         return Regex.Replace(name,@"[^ \/\p{L}\p{N}_\.,;:!@#$%^&*)(\]\[_-]+","");
+    }
+
+    private async void SendChunk(object state)
+    {
+        // Wait for semaphore
+        await semaphore.WaitAsync();
+
+        try
+        {
+            object[] parameters = (object[])state;
+            Task<Stream> fileStream = (Task<Stream>)parameters[0];
+            long offset = (long)parameters[1];
+            TransferFile f = (TransferFile)parameters[2];
+            string roundtriptoken = (string)parameters[3];
+
+            var f_content = new byte[ChunkSize];
+
+            lock (fileStream)
+            {
+                var readTask = fileStream.Result;
+                readTask.Seek(offset, 0);
+                var readSize = readTask.Read(f_content, 0, ChunkSize);
+
+                if (readSize != ChunkSize)
+                {
+                    f_content = f_content.Take(readSize).ToArray();
+                }
+            }
+
+            var t = await Call(HttpVerb.Put,
+                $"/file/{f.Id}/chunk/{offset}",
+                new Dictionary<string, string>
+                {
+                    { "key", f.Uid.ToString() },
+                    { "roundtriptoken", roundtriptoken }
+                },
+                null,
+                f_content,
+                new Dictionary<string, string> { { "Content-Type", "application/octet-stream" } });
+            t.EnsureSuccessStatusCode();
+        }
+        finally
+        {
+            // Release semaphore
+            semaphore.Release();
+            countdown.Signal();
+        }
     }
 }
