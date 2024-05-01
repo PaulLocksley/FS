@@ -128,12 +128,7 @@ public class FileSenderServer
         foreach (var f_info in files)
         {
             var tmpFile = new Dictionary<string, string>();
-            tmpFile["name"] = f_info.FileName;//,@"^[ \/\p{L}\p{N}_\.,;:!@#$%^&*)(\]\[_-]+","");
-            
-            if(tmpFile["name"].Any(x => ilegalChars.Contains(x)))
-            {
-                tmpFile["name"] = Guid.NewGuid().ToString();
-            }
+            tmpFile["name"] = Regex.Replace(f_info.FileName,@"[^ \/\p{L}\p{N}_\.,;:!@#$%^&*)(\]\[_-]+","");
             tmpFile["size"] = f_info.FileSize.ToString();
             tmpFile["mime_type"] = f_info.MimeType;
 
