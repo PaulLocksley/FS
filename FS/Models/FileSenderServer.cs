@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -115,13 +116,15 @@ public class FileSenderServer
 
     public async void testTransfer((String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)[] files)
     {
+        Debug.WriteLine($"starting test transfer");
+
         var v = await Call(HttpVerb.Get,"/transfer", new Dictionary<string, string>(),null,null, new Dictionary<string, string>());
         var boddy = await v.Content.ReadAsStringAsync();
         Console.WriteLine(boddy);
         Console.WriteLine("Hello, World!");
         var tc = new Dictionary<string, object>();
         tc["from"] = "john@locksley.dev";
-
+        
         var backTrace = new Dictionary<string, (string MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
         var ilegalChars = Path.GetInvalidPathChars();
         var filesObject = new List<Dictionary<string,string>>();
@@ -151,20 +154,28 @@ public class FileSenderServer
 
         var o = await Call(HttpVerb.Post, "/transfer", new Dictionary<string, string>(), tc, null,
             new Dictionary<string, string>());
-
+        Debug.WriteLine($"Sent transfer request");
+        o.EnsureSuccessStatusCode();
         var kk = await o.Content.ReadAsStringAsync();
+        Debug.WriteLine($"Transfer response {kk}");
+
         var za =  JsonSerializer.Deserialize<Transfer>(kk);
-        Console.WriteLine(kk);
-        Console.WriteLine(za.Files[0].Name);
+        if (za is null)
+        {
+            throw new ApplicationException("Server failed to validate transfer");
+        }
+        Debug.WriteLine($"Transfer obj {za}");
+
 
         foreach (var f in za.Files)
         {
             var f_path = backTrace[f.Cid].FullPath;
-            
             var f_size = backTrace[f.Cid].FileSize;
-
+            var tasks = new List<Task>();
             for (long i = 0; i < f_size; i += ChunkSize)
             {
+                Debug.WriteLine($"working on {i}");
+
                 var f_content = new byte[ChunkSize];
                 var readTask = backTrace[f.Cid].FileStream.Result;
                 var readSize = readTask.Read(f_content, 0, ChunkSize);
@@ -173,7 +184,8 @@ public class FileSenderServer
                 {
                     f_content = f_content.Take(readSize).ToArray();
                 }
-                var pac = await Call(HttpVerb.Put,
+
+                var t = Call(HttpVerb.Put,
                     $"/file/{f.Id}/chunk/{i}",
                     new Dictionary<string, string>
                     {
@@ -183,10 +195,16 @@ public class FileSenderServer
                     null,
                     f_content,
                     new Dictionary<string, string> { { "Content-Type", "application/octet-stream" } });
-                var kkp = await pac.Content.ReadAsStringAsync();
-                Console.WriteLine(kkp);
+                Debug.WriteLine($"task status for {i} {t.Status}");
+                tasks.Add(t);
+                //var kkp = await pac.Content.ReadAsStringAsync();
+                //Console.WriteLine(kkp);
+                Debug.WriteLine($"reading {i}");
             }
 
+            Debug.WriteLine("Waiting for tasks");
+            await Task.WhenAll(tasks);
+            Debug.WriteLine("Done with tasks");
             var ppac = await Call(HttpVerb.Put,
                 $"/file/{f.Id}",
                 new Dictionary<string, string>
