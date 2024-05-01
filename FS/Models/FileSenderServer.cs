@@ -202,6 +202,7 @@ public class FileSenderServer
         {
             for (long i = 0; i < f.Size; i += ChunkSize)
             {
+                await semaphore.WaitAsync();
                 ThreadPool.QueueUserWorkItem(SendChunk,
                     new object[] { backTrace[f.Cid!].FileStream, i, f, za.Roundtriptoken });
             }
@@ -244,7 +245,7 @@ public class FileSenderServer
     private async void SendChunk(object state)
     {
         // Wait for semaphore
-        await semaphore.WaitAsync();
+        //await semaphore.WaitAsync();
 
         try
         {
