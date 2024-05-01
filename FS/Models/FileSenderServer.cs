@@ -1,11 +1,11 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using FS.Models;
+using Debug = System.Diagnostics.Debug;
 
 namespace FS;
 
@@ -17,8 +17,10 @@ public class FileSenderServer
     private bool insecure = true;
     private int ChunkSize = 5242880;
     private SemaphoreSlim semaphore = new SemaphoreSlim(5);
-    private CountdownEvent countdown; 
+    public CountdownEvent countdown = new CountdownEvent(1);
     
+    private int _initialCount = 0;
+    private int _currentCount = 1;
     List<string> Flatten(IDictionary<string, string> data)
     {
         var sb = new List<String>();
@@ -30,95 +32,119 @@ public class FileSenderServer
         return sb; //sb.Aggregate(" ",(y,x) => $"{y}&{x}").ToString();
     }
 
-    async Task<HttpResponseMessage> Call(HttpVerb method,string path, IDictionary<string,string> queryParams, IDictionary<string,object>? content, byte[]? rawContent, Dictionary<string,string> options)
+    async Task<HttpResponseMessage> Call(HttpVerb method,string path, IDictionary<string,string> queryParams, IDictionary<string,object>? content, byte[]? rawContent, Dictionary<string,string> options,int tryCount = 0)
     {
-        
-        queryParams["remote_user"] = username;
-        queryParams["timestamp"] = DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
-
-
-
-        var o = Flatten(queryParams);
-        var qs = o.Count > 0 ? o.Count == 1 ? o[0] : o.Aggregate((x, y) => $"{x}&{y}") : "";
-        Console.WriteLine(qs);
-        List<Byte> signedBytes = Encoding.ASCII.GetBytes(
-            $"{method.ToString().ToLower()}&{Regex.Replace(baseUrl,"https?://","")}{path}?{qs}").ToList();
-
-        var content_type = options.ContainsKey("Content-Type") ? options["Content-Type"] : "application/json";
-        Console.WriteLine($"Content type is {content_type}");
-        byte[]? inputContent = null;
-        
-        if (content is not null && content_type == "application/json")
+        try
         {
-            inputContent = JsonSerializer.SerializeToUtf8Bytes(content);
-            var kkk = Encoding.UTF8.GetString(inputContent);
-            //Console.WriteLine(kkk);
-            
-            signedBytes.Add(Convert.ToByte('&')); 
-            signedBytes.AddRange(inputContent);
-        }else if (rawContent is not null)
-        {
-            inputContent = rawContent;
-            signedBytes.Add(Convert.ToByte('&')); //this may be a problem
-            signedBytes.AddRange(inputContent);
+            queryParams["remote_user"] = username;
+            queryParams["timestamp"] = DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
+
+
+
+            var o = Flatten(queryParams);
+            var qs = o.Count > 0 ? o.Count == 1 ? o[0] : o.Aggregate((x, y) => $"{x}&{y}") : "";
+            Console.WriteLine(qs);
+            List<Byte> signedBytes = Encoding.ASCII.GetBytes(
+                $"{method.ToString().ToLower()}&{Regex.Replace(baseUrl, "https?://", "")}{path}?{qs}").ToList();
+
+            var content_type = options.ContainsKey("Content-Type") ? options["Content-Type"] : "application/json";
+            Console.WriteLine($"Content type is {content_type}");
+            byte[]? inputContent = null;
+
+            if (content is not null && content_type == "application/json")
+            {
+                inputContent = JsonSerializer.SerializeToUtf8Bytes(content);
+                var kkk = Encoding.UTF8.GetString(inputContent);
+                //Console.WriteLine(kkk);
+
+                signedBytes.Add(Convert.ToByte('&'));
+                signedBytes.AddRange(inputContent);
+            }
+            else if (rawContent is not null)
+            {
+                inputContent = rawContent;
+                signedBytes.Add(Convert.ToByte('&')); //this may be a problem
+                signedBytes.AddRange(inputContent);
+            }
+
+            //Console.WriteLine(Encoding.ASCII.GetString(signedBytes.ToArray()));
+            var binaryKey = Encoding.ASCII.GetBytes(apikey); //this is fucked
+            using (var bKeyKey = new HMACSHA1(binaryKey))
+            {
+                var hashBytes = bKeyKey.ComputeHash(signedBytes.ToArray());
+                queryParams["signature"] = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+            }
+
+            var handler = new HttpClientHandler();
+            if (insecure)
+            {
+                handler.ServerCertificateCustomValidationCallback =
+                    HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+            }
+
+            var client = new HttpClient(handler);
+            client.BaseAddress = new Uri(baseUrl);
+            //Console.WriteLine(Encoding.ASCII.GetString(signedBytes.ToArray()));
+            //Console.WriteLine("a");
+
+            var queryString = HttpUtility.ParseQueryString(string.Empty);
+
+            foreach (var kvp in queryParams)
+            {
+                queryString[kvp.Key] = kvp.Value;
+            }
+
+            var url = $"{baseUrl}{path}?{queryString}";
+
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            //client.DefaultRequestHeaders.Add("Content-Type",content_type);
+            var put_content = new ByteArrayContent(inputContent ?? []);
+            put_content.Headers.Add("Content-Type", content_type);
+            HttpResponseMessage? response = null;
+            if (method == HttpVerb.Get)
+            {
+                return await client.GetAsync(url);
+            }
+
+            ;
+            if (method == HttpVerb.Post)
+            {
+                //response = await client.PostAsync(url,new ByteArrayContent(inputContent ?? []));
+                return await client.PostAsync(url, put_content);
+            }
+
+            if (method == HttpVerb.Put)
+            {
+                var request = await client.PutAsync(url, put_content);
+                request.EnsureSuccessStatusCode();
+                return request;
+            }
+
+            throw new NotImplementedException();
         }
-        //Console.WriteLine(Encoding.ASCII.GetString(signedBytes.ToArray()));
-        var binaryKey = Encoding.ASCII.GetBytes(apikey); //this is fucked
-        using(var bKeyKey = new HMACSHA1(binaryKey))
+        catch (Exception e)
         {
-            var hashBytes = bKeyKey.ComputeHash(signedBytes.ToArray());
-            queryParams["signature"] = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-        }
+            Debug.WriteLine(e);
+            if (tryCount > 5)
+            {
+                throw new Exception($"""
+                                                  Failed to send message more than limited tries.
+                                                  Inner Exception: {e.Message}
+                                                  """);
+            }
 
-        var handler = new HttpClientHandler(); 
-        if(insecure)
-        {
-            handler.ServerCertificateCustomValidationCallback =
-                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator; 
+            await Task.Delay(10000);
+            return await Call(method, path, queryParams.Where(x => x.Key != "signature").ToDictionary(), content, rawContent, options, tryCount + 1);
         }
-        
-        var client = new HttpClient(handler);
-        client.BaseAddress = new Uri(baseUrl);
-        //Console.WriteLine(Encoding.ASCII.GetString(signedBytes.ToArray()));
-        //Console.WriteLine("a");
-        
-        var queryString = HttpUtility.ParseQueryString(string.Empty);
-        
-        foreach (var kvp in queryParams)
-        {
-            queryString[kvp.Key] = kvp.Value;
-        } 
-        
-        var url = $"{baseUrl}{path}?{queryString}";
-        
-        client.DefaultRequestHeaders.Add("Accept","application/json");
-        //client.DefaultRequestHeaders.Add("Content-Type",content_type);
-        var put_content = new ByteArrayContent(inputContent ?? []);
-        put_content.Headers.Add("Content-Type",content_type);
-        HttpResponseMessage? response = null;
-        if(method == HttpVerb.Get)
-        {
-            return await client.GetAsync(url);
-        };
-        if (method == HttpVerb.Post)
-        {
-            //response = await client.PostAsync(url,new ByteArrayContent(inputContent ?? []));
-            return await client.PostAsync(url,put_content);
-        }
-
-        if (method == HttpVerb.Put)
-        {
-            var request = await client.PutAsync(url,put_content);
-            request.EnsureSuccessStatusCode();
-            return request;
-        }
-        throw new NotImplementedException();
     }
 
-    public async void testTransfer((String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)[] files)
+    public async Task testTransfer((String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)[] files)
     {
         Debug.WriteLine($"starting test transfer");
-
+        if (files.Length == 0)
+        {
+            return;
+        }
         var v = await Call(HttpVerb.Get,"/transfer", new Dictionary<string, string>(),null,null, new Dictionary<string, string>());
         var boddy = await v.Content.ReadAsStringAsync();
         Console.WriteLine(boddy);
@@ -169,6 +195,8 @@ public class FileSenderServer
         Debug.WriteLine($"Transfer obj {za}");
 
         countdown = new CountdownEvent(za.Files.Aggregate(0,(i,f) => i + (int)Math.Ceiling(f.Size / (decimal)ChunkSize)));
+        _initialCount = za.Files.Aggregate(0, (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)ChunkSize));
+        _currentCount = _initialCount;
 
         foreach (var f in za.Files)
         {
@@ -178,7 +206,8 @@ public class FileSenderServer
                     new object[] { backTrace[f.Cid!].FileStream, i, f, za.Roundtriptoken });
             }
         }
-
+        Console.WriteLine(countdown.InitialCount);
+        Console.WriteLine(countdown.CurrentCount);
         countdown.Wait();
         foreach (var f in za.Files){
             var ppac = await Call(HttpVerb.Put,
@@ -255,7 +284,15 @@ public class FileSenderServer
         {
             // Release semaphore
             semaphore.Release();
+            Interlocked.Decrement(ref _currentCount);
             countdown.Signal();
         }
+    }
+
+    public Double getProgressPercent()
+    {
+        var k = (double)_currentCount / (double)_initialCount - 1;
+        var l = k * -1;
+        return l;
     }
 }

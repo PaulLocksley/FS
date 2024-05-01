@@ -38,6 +38,11 @@
                 SemanticProperties.Hint="Send the selected files"
                 Clicked="SendFiles"
                 HorizontalOptions="Fill" />
+            <Label x:Name="CounterCount"></Label>
+            <ProgressBar Progress="0.0"
+                         ProgressColor="Orange" 
+                         x:Name="CounterProgress"/>
+
         </VerticalStackLayout>
     </ScrollView>
 
