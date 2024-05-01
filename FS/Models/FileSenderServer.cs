@@ -128,7 +128,7 @@ public class FileSenderServer
         foreach (var f_info in files)
         {
             var tmpFile = new Dictionary<string, string>();
-            tmpFile["name"] = Regex.Replace(f_info.FileName,@"[^ \/\p{L}\p{N}_\.,;:!@#$%^&*)(\]\[_-]+","");
+            tmpFile["name"] = CleanFileName(f_info.FileName);
             tmpFile["size"] = f_info.FileSize.ToString();
             tmpFile["mime_type"] = f_info.MimeType;
 
@@ -216,6 +216,6 @@ public class FileSenderServer
 
     public static string CleanFileName(string name)
     {
-        
+        return Regex.Replace(name,@"[^ \/\p{L}\p{N}_\.,;:!@#$%^&*)(\]\[_-]+","");
     }
 }
