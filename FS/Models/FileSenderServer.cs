@@ -5,7 +5,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using FS.Models;
-using HeyRed.Mime;
 
 namespace FS;
 
@@ -114,7 +113,7 @@ public class FileSenderServer
         throw new NotImplementedException();
     }
 
-    public async void testTransfer((FileInfo,Task<Stream>)[] files)
+    public async void testTransfer((String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)[] files)
     {
         var v = await Call(HttpVerb.Get,"/transfer", new Dictionary<string, string>(),null,null, new Dictionary<string, string>());
         var boddy = await v.Content.ReadAsStringAsync();
@@ -123,15 +122,15 @@ public class FileSenderServer
         var tc = new Dictionary<string, object>();
         tc["from"] = "john@locksley.dev";
 
-        var backTrace = new Dictionary<string, (FileInfo,Task<Stream>)>();
+        var backTrace = new Dictionary<string, (string MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
         
         var filesObject = new List<Dictionary<string,string>>();
         foreach (var f_info in files)
         {
             var tmpFile = new Dictionary<string, string>();
-            tmpFile["name"] = f_info.Item1.Name;
-            tmpFile["size"] = f_info.Item2.Result.Length.ToString();
-            tmpFile["mime_type"] = MimeTypesMap.GetMimeType(f_info.Item1.Name);
+            tmpFile["name"] = f_info.FileName;
+            tmpFile["size"] = f_info.FileSize.ToString();
+            tmpFile["mime_type"] = f_info.MimeType;
 
             tmpFile["cid"] = Guid.NewGuid().ToString();
             backTrace[tmpFile["cid"]] = f_info;
@@ -160,14 +159,14 @@ public class FileSenderServer
 
         foreach (var f in za.Files)
         {
-            var f_path = backTrace[f.Cid].Item1.FullName;
+            var f_path = backTrace[f.Cid].FullPath;
             
-            var f_size = new FileInfo(f_path).Length;
+            var f_size = backTrace[f.Cid].FileSize;
 
             for (long i = 0; i < f_size; i += ChunkSize)
             {
                 var f_content = new byte[ChunkSize];
-                var readTask = backTrace[f.Cid].Item2.Result;
+                var readTask = backTrace[f.Cid].FileStream.Result;
                 var readSize = readTask.Read(f_content, 0, ChunkSize);
 
                 if (readSize != ChunkSize)

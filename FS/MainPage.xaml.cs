@@ -8,7 +8,7 @@ public partial class MainPage : ContentPage
     int count = 0;
     private string o = "non loaded";
     private FileSenderServer FSServer = new FileSenderServer();
-    public IDictionary<string, (FileInfo,Task<Stream>)> SelectedFiles = new Dictionary<string,  (FileInfo,Task<Stream>)>();
+    public IDictionary<string, (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)> SelectedFiles = new Dictionary<string,  (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
     public MainPage()
     {
         InitializeComponent();
@@ -42,7 +42,7 @@ public partial class MainPage : ContentPage
                 var file_task = fresult.OpenReadAsync();
                 redo.Text = file_task.Result.Length.ToString();
                 Console.WriteLine(file_task.Status);
-                SelectedFiles[fresult.FullPath] = (new FileInfo(fresult.FullPath),file_task);
+                SelectedFiles[fresult.FullPath] = (fresult.ContentType,file_task,fresult.FullPath,fresult.FileName,file_task.Result.Length);
                 Device.BeginInvokeOnMainThread(() =>
                 {
                     FilesListView.ItemsSource = SelectedFiles.Keys;
@@ -65,6 +65,6 @@ public partial class MainPage : ContentPage
         FSServer.testTransfer(SelectedFiles.Select(x => x.Value).ToArray());
         SendFilesBtn.Text = "Complete";
         CounterBtn.Text = "Select Files";
-        SelectedFiles = new Dictionary<string,  (FileInfo,Task<Stream>)>();
+        SelectedFiles = new Dictionary<string,  (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
     }
 }
