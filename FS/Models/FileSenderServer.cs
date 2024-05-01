@@ -123,12 +123,17 @@ public class FileSenderServer
         tc["from"] = "john@locksley.dev";
 
         var backTrace = new Dictionary<string, (string MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
-        
+        var ilegalChars = Path.GetInvalidPathChars();
         var filesObject = new List<Dictionary<string,string>>();
         foreach (var f_info in files)
         {
             var tmpFile = new Dictionary<string, string>();
-            tmpFile["name"] = f_info.FileName;
+            tmpFile["name"] = f_info.FileName;//,@"^[ \/\p{L}\p{N}_\.,;:!@#$%^&*)(\]\[_-]+","");
+            
+            if(tmpFile["name"].Any(x => ilegalChars.Contains(x)))
+            {
+                tmpFile["name"] = Guid.NewGuid().ToString();
+            }
             tmpFile["size"] = f_info.FileSize.ToString();
             tmpFile["mime_type"] = f_info.MimeType;
 
@@ -214,4 +219,8 @@ public class FileSenderServer
         Console.WriteLine("Aaa");
     }
 
+    public static string CleanFileName(string name)
+    {
+        
+    }
 }
