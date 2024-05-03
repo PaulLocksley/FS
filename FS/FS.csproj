@@ -62,4 +62,21 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <MauiXaml Update="Views\LoginView.xaml">
+        <SubType>Designer</SubType>
+      </MauiXaml>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="Views\LoginView.xaml.cs">
+        <DependentUpon>LoginView.xaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="ViewModels\" />
+    </ItemGroup>
+
 </Project>
