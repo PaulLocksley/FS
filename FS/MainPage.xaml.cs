@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using Encoding = System.Text.Encoding;
 
@@ -64,18 +65,15 @@ public partial class MainPage : ContentPage
     private async void SendFiles(object? sender, EventArgs eventArgs)
     {
         var trans = FSServer.testTransfer(SelectedFiles.Select(x => x.Value).ToArray());
-        //MainThread.BeginInvokeOnMainThread(() => {SendFilesBtn.Text = "Sending";});
-        var c = 0;
+        MainThread.BeginInvokeOnMainThread(() => {SendFilesBtn.Text = "Sending";});
         while (!trans.IsCompleted)
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                SendFilesBtn.Text = $"Sending {c}, cc {FSServer.countdown.CurrentCount}, % {FSServer.getProgressPercent()}";
-                CounterCount.Text = FSServer.countdown.CurrentCount.ToString();
+                CounterCount.Text = FSServer.getProgressPercent().ToString(CultureInfo.CurrentCulture);
                 CounterProgress.ProgressTo(FSServer.getProgressPercent() ,
-                    40, Easing.Linear);
+                    100, Easing.Linear);
             });
-            c++;
             await Task.Delay(100);
         }
         MainThread.BeginInvokeOnMainThread(() =>
