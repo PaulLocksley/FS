@@ -18,6 +18,7 @@ public static class MauiProgram
 
 #if DEBUG
         builder.Logging.AddDebug();
+        SecureStorage.Default.RemoveAll();
 #endif
 
         return builder.Build();
