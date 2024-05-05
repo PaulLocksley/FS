@@ -2,15 +2,19 @@
 
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:FS.Models"
              x:Class="FS.LoginView">
-    <ContentPage.Content>
-        <HorizontalStackLayout x:Name="LoginViewStack">
+    <!--<ContentPage.Content>
+        <VerticalStackLayout x:Name="LoginViewStack">
+            <Label Text="Select your FileSender provider" />
+
+            <VerticalStackLayout x:Name="serverList"></VerticalStackLayout>
             <WebView 
-                HeightRequest="1000"
-                WidthRequest="1000" 
+                HeightRequest="0"
+                WidthRequest="0" 
                 x:Name="LoginForm"
                 Source="https://192.168.20.138/filesender"
             />
-        </HorizontalStackLayout>
-    </ContentPage.Content>
+        </VerticalStackLayout>
+    </ContentPage.Content>-->
 </ContentPage>

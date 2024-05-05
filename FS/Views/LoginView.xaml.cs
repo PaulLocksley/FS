@@ -1,19 +1,65 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
+using FS.ViewModels;
 
 namespace FS;
 
+[XamlCompilation(XamlCompilationOptions.Compile)]
 public partial class LoginView : ContentPage
 {
+    private VerticalStackLayout LoginViewStack = new VerticalStackLayout();
+    private WebView LoginForm = new WebView();
+    private VerticalStackLayout serverList = new VerticalStackLayout();
+    private LoginViewModel viewModel = new LoginViewModel();
     public LoginView()
     {
-        InitializeComponent();
-        this.Appearing += OnPageAppearing;
+        foreach (var server in viewModel.DefaultPublicServers)
+        {
+            var b = new Button();
+            b.Text = server.Name;
+            b.CommandParameter = server.Address;
+            b.Clicked += SelectedServer;
+            //b.Command = viewModel.testtttttCommand;
+            serverList.Add(b);
+        }
 
+        var welcomeBanner = new Label();
+        welcomeBanner.Text = "Select your server";
+        LoginViewStack.Children.Add(welcomeBanner);
+        LoginViewStack.Children.Add(serverList);
+        Content = new Grid
+        {
+            Children =
+            {
+                LoginViewStack
+
+            }
+        };
+        //InitializeComponent();
+        
+        //BindingContext = 
+
+        //this.Appearing += OnPageAppearing;
+        
+
+    }
+
+    private async void SelectedServer(object sender, EventArgs e)
+    {
+        System.Reflection.PropertyInfo pi = sender.GetType().GetProperty("CommandParameter");
+        Uri address = (Uri)(pi.GetValue(sender, null));
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            serverList.Children.Clear();
+            LoginForm.Source = address;
+            LoginForm.HeightRequest = 1000;
+            LoginForm.WidthRequest = 1000;
+            serverList.Children.Add(LoginForm);
+
+        });
+        YoinkConfigFromWebView(null,null);
+        Debug.WriteLine("AAAATest");
     }
     
     private void OnPageAppearing(object sender, EventArgs e)
