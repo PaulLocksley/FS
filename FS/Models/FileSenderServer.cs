@@ -11,16 +11,22 @@ namespace FS;
 
 public class FileSenderServer
 {
-    private string baseUrl = "https://192.168.20.138/filesender/rest.php";
-    private string username = "john@locksley.dev";
-    private string apikey = "6822185aa4ad908bf9c7da9dcabdb57d0d7cb71edbf87d3da4a8a7c936c10f29";
-    private bool insecure = true;
-    private int ChunkSize = 5242880;
-    private SemaphoreSlim semaphore = new SemaphoreSlim(5);
-    public CountdownEvent countdown = new CountdownEvent(1);
-    
+    private SemaphoreSlim _semaphore;
+    private CountdownEvent _countdown = new CountdownEvent(1);
     private int _initialCount = 0;
     private int _currentCount = 1;
+    
+    public FileSenderServerConfig config;
+
+    public FileSenderServer(FileSenderServerConfig config)
+    {
+        this.config = config;
+        _semaphore = new SemaphoreSlim(config.WorkerCount);
+    }
+    
+ 
+    
+    
     List<string> Flatten(IDictionary<string, string> data)
     {
         var sb = new List<String>();
@@ -36,7 +42,7 @@ public class FileSenderServer
     {
         try
         {
-            queryParams["remote_user"] = username;
+            queryParams["remote_user"] = config.Username;
             queryParams["timestamp"] = DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
 
 
@@ -45,7 +51,7 @@ public class FileSenderServer
             var qs = o.Count > 0 ? o.Count == 1 ? o[0] : o.Aggregate((x, y) => $"{x}&{y}") : "";
             Console.WriteLine(qs);
             List<Byte> signedBytes = Encoding.ASCII.GetBytes(
-                $"{method.ToString().ToLower()}&{Regex.Replace(baseUrl, "https?://", "")}{path}?{qs}").ToList();
+                $"{method.ToString().ToLower()}&{Regex.Replace(config.BaseUrl, "https?://", "")}{path}?{qs}").ToList();
 
             var content_type = options.ContainsKey("Content-Type") ? options["Content-Type"] : "application/json";
             Console.WriteLine($"Content type is {content_type}");
@@ -68,7 +74,7 @@ public class FileSenderServer
             }
 
             //Console.WriteLine(Encoding.ASCII.GetString(signedBytes.ToArray()));
-            var binaryKey = Encoding.ASCII.GetBytes(apikey); //this is fucked
+            var binaryKey = Encoding.ASCII.GetBytes(config.Apikey); //this is fucked
             using (var bKeyKey = new HMACSHA1(binaryKey))
             {
                 var hashBytes = bKeyKey.ComputeHash(signedBytes.ToArray());
@@ -76,14 +82,14 @@ public class FileSenderServer
             }
 
             var handler = new HttpClientHandler();
-            if (insecure)
-            {
+            
+            #if DEBUG
                 handler.ServerCertificateCustomValidationCallback =
                     HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-            }
+            #endif
 
             var client = new HttpClient(handler);
-            client.BaseAddress = new Uri(baseUrl);
+            client.BaseAddress = new Uri(config.BaseUrl);
             //Console.WriteLine(Encoding.ASCII.GetString(signedBytes.ToArray()));
             //Console.WriteLine("a");
 
@@ -94,7 +100,7 @@ public class FileSenderServer
                 queryString[kvp.Key] = kvp.Value;
             }
 
-            var url = $"{baseUrl}{path}?{queryString}";
+            var url = $"{config.BaseUrl}{path}?{queryString}";
 
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             //client.DefaultRequestHeaders.Add("Content-Type",content_type);
@@ -194,22 +200,22 @@ public class FileSenderServer
         }
         Debug.WriteLine($"Transfer obj {za}");
 
-        countdown = new CountdownEvent(za.Files.Aggregate(0,(i,f) => i + (int)Math.Ceiling(f.Size / (decimal)ChunkSize)));
-        _initialCount = za.Files.Aggregate(0, (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)ChunkSize));
+        _countdown = new CountdownEvent(za.Files.Aggregate(0,(i,f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize)));
+        _initialCount = za.Files.Aggregate(0, (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize));
         _currentCount = _initialCount;
 
         foreach (var f in za.Files)
         {
-            for (long i = 0; i < f.Size; i += ChunkSize)
+            for (long i = 0; i < f.Size; i += config.ChunkSize)
             {
-                await semaphore.WaitAsync();
+                await _semaphore.WaitAsync();
                 ThreadPool.QueueUserWorkItem(SendChunk,
                     new object[] { backTrace[f.Cid!].FileStream, i, f, za.Roundtriptoken });
             }
         }
-        Console.WriteLine(countdown.InitialCount);
-        Console.WriteLine(countdown.CurrentCount);
-        countdown.Wait();
+        Console.WriteLine(_countdown.InitialCount);
+        Console.WriteLine(_countdown.CurrentCount);
+        _countdown.Wait();
         foreach (var f in za.Files){
             var ppac = await Call(HttpVerb.Put,
                 $"/file/{f.Id}",
@@ -255,15 +261,15 @@ public class FileSenderServer
             TransferFile f = (TransferFile)parameters[2];
             string roundtriptoken = (string)parameters[3];
 
-            var f_content = new byte[ChunkSize];
+            var f_content = new byte[config.ChunkSize];
 
             lock (fileStream)
             {
                 var readTask = fileStream.Result;
                 readTask.Seek(offset, 0);
-                var readSize = readTask.Read(f_content, 0, ChunkSize);
+                var readSize = readTask.Read(f_content, 0, config.ChunkSize);
 
-                if (readSize != ChunkSize)
+                if (readSize != config.ChunkSize)
                 {
                     f_content = f_content.Take(readSize).ToArray();
                 }
@@ -284,9 +290,9 @@ public class FileSenderServer
         finally
         {
             // Release semaphore
-            semaphore.Release();
+            _semaphore.Release();
             Interlocked.Decrement(ref _currentCount);
-            countdown.Signal();
+            _countdown.Signal();
         }
     }
 

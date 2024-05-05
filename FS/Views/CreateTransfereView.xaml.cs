@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FS.Models;
 
 namespace FS.Views;
 
@@ -11,15 +12,15 @@ public partial class CreateTransfereView : ContentPage
 {
     int count = 0;
     private string o = "non loaded";
-    private FileSenderServer FSServer = new FileSenderServer();
+    private FileSenderServer FSServer;
     public IDictionary<string, (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)> SelectedFiles = new Dictionary<string,  (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
     
-    public CreateTransfereView()
+    public CreateTransfereView(FileSenderServer fsServer)
     {
         InitializeComponent();
+        FSServer = fsServer;
         //FilesListView = new ListView();
         FilesListView.ItemsSource = SelectedFiles.Keys;
-        CounterCount.Text = FSServer.countdown.CurrentCount.ToString();
     }
 
     private void OnCounterClicked(object sender, EventArgs e)

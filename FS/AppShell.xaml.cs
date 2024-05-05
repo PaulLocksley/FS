@@ -1,4 +1,6 @@
-﻿namespace FS;
+﻿using FS.Models;
+
+namespace FS;
 
 public partial class AppShell : Shell
 {
@@ -6,4 +8,5 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
     }
+
 }

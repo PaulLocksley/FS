@@ -4,11 +4,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="FS.LoginView">
     <ContentPage.Content>
-        <WebView 
-            HeightRequest="1000"
-            WidthRequest="1000" 
-            x:Name="LoginForm"
-            Source="https://192.168.20.138/filesender"
-        />
+        <HorizontalStackLayout>
+            
+            <WebView 
+                HeightRequest="1000"
+                WidthRequest="1000" 
+                x:Name="LoginForm"
+                Source="https://192.168.20.138/filesender"
+            />
+            <Button Clicked="onLoggedIn" Text="I'm Logged in"></Button>
+        </HorizontalStackLayout>
     </ContentPage.Content>
 </ContentPage>

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,17 +36,21 @@ public partial class LoginView : ContentPage
             fake_node_text = await LoginForm.EvaluateJavaScriptAsync("document.getElementById('fake_node').innerText");
         }
         Thread.Sleep(100);
-        foreach (var line in fake_node_text.Split("\n").Where(s => s.Contains('=')))
+        foreach (var line in fake_node_text.Split("\\n").Where(s => s.Contains('=')))
         {
             var tmp_vals = line.Split('=');
             if (tmp_vals.Length != 2)
             {
+                continue;
                 throw new ArgumentOutOfRangeException($"Config line causing issues: {line}");
             }
-            await SecureStorage.Default.SetAsync(tmp_vals[0].Trim(), tmp_vals[1].Trim());
+            var key = tmp_vals[0].Trim();
+            var val = tmp_vals[1].Trim();
+            if (val == "") { continue; }
+            Debug.WriteLine($"Trying to write {key} = {val}");
+            await SecureStorage.Default.SetAsync(key, val);
         }
-        
-        var folder = FileSystem.Current.AppDataDirectory;
 
+        Navigation.PopAsync();
     }
 }
