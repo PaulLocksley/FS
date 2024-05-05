@@ -12,25 +12,22 @@ public partial class LoginView : ContentPage
     public LoginView()
     {
         InitializeComponent();
-        Debug.WriteLine("here1");
         this.Appearing += OnPageAppearing;
 
     }
     
     private void OnPageAppearing(object sender, EventArgs e)
     {
-        Debug.WriteLine("here2");
-        onLoggedIn(sender, e);
+        YoinkConfigFromWebView(sender, e);
     }
     
-    private async void onLoggedIn(object sender, EventArgs e)
+    private async void YoinkConfigFromWebView(object sender, EventArgs e)
     {
-        await Task.Delay(10000);
-        Debug.WriteLine("here3");
+        //Wait for user to login.
+        await Task.Delay(5000);
         while (true)
         {
             await Task.Delay(500);
-            Debug.WriteLine("here4");
             var k = await LoginForm.EvaluateJavaScriptAsync("window.filesender && window.filesender.client.base_path");
             Debug.WriteLine(k);
             if (k is not null)
@@ -38,14 +35,16 @@ public partial class LoginView : ContentPage
                 break;
             }
         }
+        
+        //User is now logged in.
         var get_config = LoginForm.EvaluateJavaScriptAsync(
-            "var temp = document.createElement('p');temp.id = 'fake_node';temp.innerText = 'init';document.body.insertBefore(temp, document.body.childNodes[0]);fetch(window.location.href.split('?')[0]+'clidownload.php?config=1').then((response) => response.text()).then((text) => temp.innerText = (text));");
+            "var temp = document.createElement('p');temp.id = 'fake_node';temp.innerText = 'init';temp.style.fontSize = '0px';document.body.appendChild(temp);fetch(window.location.href.split('?')[0]+'clidownload.php?config=1').then((response) => response.text()).then((text) => temp.innerText = (text));");
         /*
            Eval seems to fail with """ strings for some reason. Not terible formating:
           var temp = document.createElement('p');
           temp.id = 'fake_node';
           temp.innerText = 'init';
-          document.body.insertBefore(temp, document.body.childNodes[0]);
+          document.body.appendChild(temp);
           fetch(window.location.href.split('?')[0]+'clidownload.php?config=1').then((response) => response.text()).then((text) => temp.innerText = (text));
          */
         
@@ -53,13 +52,14 @@ public partial class LoginView : ContentPage
         var fake_node_text = await LoginForm.EvaluateJavaScriptAsync("document.getElementById('fake_node').innerText");
         while (fake_node_text == "init")// || kkk == "null")
         {
-            Thread.Sleep(100);
+            await Task.Delay(100);
             fake_node_text = await LoginForm.EvaluateJavaScriptAsync("document.getElementById('fake_node').innerText");
         }
-        Thread.Sleep(100);
+        await Task.Delay(100);
 
         var allowed_keys = new string[] { "apikey", "username", "default_transfer_days_valid ", "base_url" };
-        foreach (var line in fake_node_text.Split("\\n").Where(s => s.Contains('=')))
+        var apiKeySet = false;
+        foreach (var line in fake_node_text.Split(@"\n").Where(s => s.Contains('=')))
         {
             var tmp_vals = line.Split('=');
             var key = tmp_vals[0].Trim();
@@ -74,8 +74,24 @@ public partial class LoginView : ContentPage
             if (val == "") { continue; }
             Debug.WriteLine($"Trying to write {key} = {val}");
             await SecureStorage.Default.SetAsync(key, val);
+            if (key == "apikey") { apiKeySet = true; }
         }
 
-        Navigation.PopAsync();
+        if (apiKeySet)
+        {
+            Navigation.PopAsync();
+        }
+        else
+        {
+            var warning = new Label
+            {
+                Text = "Could not get valid api key. Ensure your FileSender account has a Secret under 'My Profile'"
+
+            };
+            LoginViewStack.Children.Insert(0,warning);
+            LoginViewStack.Children.RemoveAt(1);
+        }
+        
+        
     }
 }
