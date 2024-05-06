@@ -53,8 +53,8 @@ public partial class LoginView : ContentPage
         {
             serverList.Children.Clear();
             LoginForm.Source = address;
-            LoginForm.HeightRequest = 1000;
-            LoginForm.WidthRequest = 1000;
+            LoginForm.HeightRequest = Window.Height;
+            LoginForm.WidthRequest = Window.Width;
             serverList.Children.Add(LoginForm);
 
         });
