@@ -5,36 +5,28 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FS.Models;
+using FS.ViewModels;
 
 namespace FS.Views;
 
-public partial class CreateTransfereView : ContentPage
+public partial class CreateTransferView : ContentPage
 {
-    int count = 0;
     private string o = "non loaded";
-    private FileSenderServer FSServer;
+    private CreateTransferViewModel viewModel;
     public IDictionary<string, (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)> SelectedFiles = new Dictionary<string,  (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
     
-    public CreateTransfereView(FileSenderServer fsServer)
+    public CreateTransferView(FileSenderServer fsServer)
     {
         InitializeComponent();
-        FSServer = fsServer;
+        viewModel = new CreateTransferViewModel(fsServer);
         //FilesListView = new ListView();
         FilesListView.ItemsSource = SelectedFiles.Keys;
     }
 
-    private void OnCounterClicked(object sender, EventArgs e)
+    private void SelectFiles(object sender, EventArgs e)
     {
-        count++;
-        var k = PickAndShow();
-     
-        //CounterBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}"); 
-
-        /*if (count == 1)
-            CounterBtn.Text = $"Clicked {count} time {o}";
-        else
-            CounterBtn.Text = $"Clicked {count} times {o}";*/
-        SemanticScreenReader.Announce(CounterBtn.Text);
+        //todo: look at the send and fire thing from that one async talk. 
+        PickAndShow();
     }
     
     public async Task<IEnumerable<FileResult>> PickAndShow()
@@ -42,40 +34,42 @@ public partial class CreateTransfereView : ContentPage
         try
         {
             var result = await FilePicker.Default.PickMultipleAsync(new PickOptions());
-            foreach (var fresult in result)
+            var pickAndShow = result as FileResult[] ?? result.ToArray();
+            foreach (var fresult in pickAndShow)
             {
-                
                 var file_task = fresult.OpenReadAsync();
-                redo.Text = file_task.Result.Length.ToString();
+                //redo.Text = file_task.Result.Length.ToString();
                 Console.WriteLine(file_task.Status);
                 SelectedFiles[fresult.FullPath] = (fresult.ContentType,file_task,fresult.FullPath,fresult.FileName,file_task.Result.Length);
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     FilesListView.ItemsSource = SelectedFiles.Keys;
-                    CounterBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}");
+                    SelectFilesBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}");
                 });
             }
-            return result;
+            return pickAndShow;
         }
         catch (Exception ex)
         {
             // The user canceled or something went wrong
         }
-
-        //CounterBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}"); 
-        return null;
+        return new List<FileResult>();
     }
 
     private async void SendFiles(object? sender, EventArgs eventArgs)
     {
-        var trans = FSServer.testTransfer(SelectedFiles.Select(x => x.Value).ToArray());
+        var trans = viewModel.FSServer.SendTransfer(new string[]{EmailInput.Text},
+            SubjectInput.Text,
+            DescriptionInput.Text,
+            SelectedFiles.Select(x => x.Value).ToArray());
+        
         MainThread.BeginInvokeOnMainThread(() => {SendFilesBtn.Text = "Sending";});
         while (!trans.IsCompleted)
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                CounterCount.Text = FSServer.getProgressPercent().ToString(CultureInfo.CurrentCulture);
-                CounterProgress.ProgressTo(FSServer.getProgressPercent() ,
+                CounterCount.Text = viewModel.FSServer.getProgressPercent().ToString(CultureInfo.CurrentCulture);
+                CounterProgress.ProgressTo(viewModel.FSServer.getProgressPercent() ,
                     100, Easing.Linear);
             });
             await Task.Delay(100);
@@ -83,7 +77,7 @@ public partial class CreateTransfereView : ContentPage
         MainThread.BeginInvokeOnMainThread(() =>
         {
             SendFilesBtn.Text = "Complete";
-            CounterBtn.Text = "Select Files";
+            SelectFilesBtn.Text = "Select Files";
             SelectedFiles =
                 new Dictionary<string, (String MimeType, Task<Stream> FileStream, String FullPath, String FileName, long
                     FileSize)>();

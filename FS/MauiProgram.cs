@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Maui.Markup;
+﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Markup;
 using Microsoft.Extensions.Logging;
 
 namespace FS;
@@ -12,6 +13,7 @@ public static class MauiProgram
 
         builder
             .UseMauiApp<App>()
+            .UseMauiCommunityToolkit()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -20,7 +22,7 @@ public static class MauiProgram
 
 #if DEBUG
         builder.Logging.AddDebug();
-        SecureStorage.Default.RemoveAll();
+        //SecureStorage.Default.RemoveAll();
 #endif
 
         return builder.Build();

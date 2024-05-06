@@ -37,7 +37,7 @@ public partial class MainPage : ContentPage
                 VStack.Children.Clear();
                 VStack.Children.Add(new CreateTransfereView(fsServer));
             });*/
-            Application.Current.MainPage = new CreateTransfereView(fsServer);
+            Application.Current.MainPage = new CreateTransferView(fsServer);
 
         }
         catch(Exception e)

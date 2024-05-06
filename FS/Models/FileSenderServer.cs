@@ -144,22 +144,18 @@ public class FileSenderServer
         }
     }
 
-    public async Task testTransfer((String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)[] files)
+    public async Task SendTransfer(string[] recepients,string subject,string message,(String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)[] files)
     {
         Debug.WriteLine($"starting test transfer");
         if (files.Length == 0)
         {
             return;
         }
-        var v = await Call(HttpVerb.Get,"/transfer", new Dictionary<string, string>(),null,null, new Dictionary<string, string>());
-        var boddy = await v.Content.ReadAsStringAsync();
-        Console.WriteLine(boddy);
-        Console.WriteLine("Hello, World!");
-        var tc = new Dictionary<string, object>();
-        tc["from"] = "john@locksley.dev";
+
+        var transferContent = new Dictionary<string, object>();
+        transferContent["from"] = "john@locksley.dev";
         
         var backTrace = new Dictionary<string, (string MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
-        var ilegalChars = Path.GetInvalidPathChars();
         
         var filesObject = new List<Dictionary<string,string>>();
         foreach (var f_info in files)
@@ -173,74 +169,74 @@ public class FileSenderServer
             backTrace[tmpFile["cid"]] = f_info;
             filesObject.Add(tmpFile);
         }
-        var to = new List<String>();
-        to.Add("paul@locksley.dev");
 
-        tc["files"] = filesObject.ToArray();//;
-        tc["recipients"] = to.ToArray();
-        tc["subject"] = "Memes and shit";
-        tc["message"] = "new and old memes, but only good";
-        tc["expires"] = DateTimeOffset.UtcNow.AddDays(2).ToUnixTimeSeconds();
-        tc["aup_checked"] = 1;
-        var k = new Dictionary<string, int>();
-        k["get_a_link"] = 0;
-        tc["options"] = k;
+        transferContent["files"] = filesObject.ToArray();//;
+        transferContent["recipients"] = recepients;
+        transferContent["subject"] = subject;
+        transferContent["message"] = message;
+        transferContent["expires"] = DateTimeOffset.UtcNow.AddDays(config.DefaultTransferDaysValid).ToUnixTimeSeconds();
+        transferContent["aup_checked"] = 1;
+        
+        var optionsDict = new Dictionary<string, int>
+        {
+            ["get_a_link"] = 0
+        };
+        transferContent["options"] = optionsDict;
 
-        var o = await Call(HttpVerb.Post, "/transfer", new Dictionary<string, string>(), tc, null,
+        var createTransferCall = await Call(HttpVerb.Post, "/transfer", new Dictionary<string, string>(), transferContent, null,
             new Dictionary<string, string>());
         Debug.WriteLine($"Sent transfer request");
-        o.EnsureSuccessStatusCode();
-        var kk = await o.Content.ReadAsStringAsync();
-        Debug.WriteLine($"Transfer response {kk}");
+        createTransferCall.EnsureSuccessStatusCode();
+        var transferResponseText = await createTransferCall.Content.ReadAsStringAsync();
+        Debug.WriteLine($"Transfer response {transferResponseText}");
 
-        var za =  JsonSerializer.Deserialize<Transfer>(kk);
-        if (za is null)
+        var transferResponse = JsonSerializer.Deserialize<Transfer>(transferResponseText);
+        if (transferResponse is null)
         {
             throw new ApplicationException("Server failed to validate transfer");
         }
-        Debug.WriteLine($"Transfer obj {za}");
+        Debug.WriteLine($"Transfer obj {transferResponse}");
 
-        _countdown = new CountdownEvent(za.Files.Aggregate(0,(i,f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize)));
-        _initialCount = za.Files.Aggregate(0, (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize));
+        _countdown = new CountdownEvent(transferResponse.Files.Aggregate(0,(i,f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize)));
+        _initialCount = transferResponse.Files.Aggregate(0, (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize));
         _currentCount = _initialCount;
 
-        foreach (var f in za.Files)
+        foreach (var f in transferResponse.Files)
         {
             for (long i = 0; i < f.Size; i += config.ChunkSize)
             {
                 await _semaphore.WaitAsync();
                 ThreadPool.QueueUserWorkItem(SendChunk,
-                    new object[] { backTrace[f.Cid!].FileStream, i, f, za.Roundtriptoken });
+                    new object[] { backTrace[f.Cid!].FileStream, i, f, transferResponse.Roundtriptoken });
             }
         }
         Console.WriteLine(_countdown.InitialCount);
         Console.WriteLine(_countdown.CurrentCount);
         _countdown.Wait();
-        foreach (var f in za.Files){
-            var ppac = await Call(HttpVerb.Put,
+        foreach (var f in transferResponse.Files){
+            var fileCompleteCall = await Call(HttpVerb.Put,
                 $"/file/{f.Id}",
                 new Dictionary<string, string>
                 {
                     { "key", f.Uid.ToString() },
-                    { "roundtriptoken", za.Roundtriptoken }
+                    { "roundtriptoken", transferResponse.Roundtriptoken }
                 },
                 new Dictionary<string, object> { { "complete", true } },
                 null, new Dictionary<string, string>());
-            ppac.EnsureSuccessStatusCode();
+            fileCompleteCall.EnsureSuccessStatusCode();
         }
 
-        var jac = await Call(HttpVerb.Put,
-            $"/transfer/{za.Id}",
+        var transferCompleteCall = await Call(HttpVerb.Put,
+            $"/transfer/{transferResponse.Id}",
             new Dictionary<string, string>
             {
-                { "key", za.Files[0].Uid.ToString() },
+                { "key", transferResponse.Files[0].Uid.ToString() },
             },
             new Dictionary<string, object> { { "complete", true } },
             null, new Dictionary<string, string>());
-        var kkpp = await jac.Content.ReadAsStringAsync();
-
-        Console.WriteLine(kkpp);
-        Console.WriteLine("Aaa");
+        transferCompleteCall.EnsureSuccessStatusCode();
+        var transferCompleteText = await transferCompleteCall.Content.ReadAsStringAsync();
+        Debug.WriteLine(transferCompleteText);
     }
 
     public static string CleanFileName(string name)

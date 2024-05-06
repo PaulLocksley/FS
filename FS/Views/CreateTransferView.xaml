@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+
+             x:Class="FS.Views.CreateTransferView">
+    <ContentPage.Resources>
+        <Style x:Key="InvalidEntryStyle" TargetType="Entry">
+            <Setter Property="TextColor" Value="Red" />
+        </Style>
+        <Style x:Key="ValidEntryStyle" TargetType="Entry">
+            <Setter Property="TextColor" Value="Green" />
+        </Style>
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <ScrollView>
+            <VerticalStackLayout
+                Padding="30,0"
+                Spacing="25">
+                <Image
+                    Source="dotnet_bot.png"
+                    HeightRequest="185"
+                    Aspect="AspectFit"
+                    SemanticProperties.Description="dot net bot in a race car number eight" />
+                <HorizontalStackLayout>
+                    <Label Text="Recipient Email:"
+                           Padding="10,0"
+                           Style="{StaticResource SubHeadline}"></Label>
+                    <Entry x:Name="EmailInput">
+                    <Entry.Behaviors>
+                        <toolkit:EmailValidationBehavior 
+                            InvalidStyle="{StaticResource InvalidEntryStyle}"
+                            ValidStyle="{StaticResource ValidEntryStyle}"
+                            Flags="ValidateOnValueChanged" />
+                    </Entry.Behaviors>
+                </Entry>
+                </HorizontalStackLayout>
+                <HorizontalStackLayout>
+                    <Label Text="Subject:"
+                           Padding="10,0"
+                           Style="{StaticResource SubHeadline}"
+                           ></Label>
+                    <Entry x:Name="SubjectInput"></Entry>
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout>
+                    <Label Text="Message:" 
+                           Padding="10,0"
+                           Style="{StaticResource SubHeadline}"> </Label>
+                    <Entry x:Name="DescriptionInput"></Entry>
+                </HorizontalStackLayout>
+                
+                <ListView x:Name="FilesListView" />
+                <Button
+                    x:Name="SelectFilesBtn"
+                    Text="Select Files" 
+                    SemanticProperties.Hint="Select Files to Include in Transfer"
+                    Clicked="SelectFiles"
+                    HorizontalOptions="Fill" />
+            
+                <Button
+                    x:Name="SendFilesBtn"
+                    Text="Send Files" 
+                    SemanticProperties.Hint="Send the selected files"
+                    Clicked="SendFiles"
+                    HorizontalOptions="Fill" />
+                <Label x:Name="CounterCount"></Label>
+                <ProgressBar Progress="0.0"
+                             ProgressColor="Orange" 
+                             x:Name="CounterProgress"/>
+                
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+</ContentPage>
