@@ -23,11 +23,13 @@
                     HeightRequest="185"
                     Aspect="AspectFit"
                     SemanticProperties.Description="dot net bot in a race car number eight" />
-                <HorizontalStackLayout>
+                <HorizontalStackLayout HorizontalOptions="Fill">
                     <Label Text="Recipient Email:"
                            Padding="10,0"
                            Style="{StaticResource SubHeadline}"></Label>
-                    <Entry x:Name="EmailInput">
+                    <Entry x:Name="EmailInput"
+                           HorizontalOptions="Fill"
+                           WidthRequest="400">
                     <Entry.Behaviors>
                         <toolkit:EmailValidationBehavior 
                             InvalidStyle="{StaticResource InvalidEntryStyle}"
@@ -41,14 +43,18 @@
                            Padding="10,0"
                            Style="{StaticResource SubHeadline}"
                            ></Label>
-                    <Entry x:Name="SubjectInput"></Entry>
+                    <Entry x:Name="SubjectInput"
+                           WidthRequest="400"
+                           ></Entry>
                 </HorizontalStackLayout>
 
                 <HorizontalStackLayout>
                     <Label Text="Message:" 
                            Padding="10,0"
                            Style="{StaticResource SubHeadline}"> </Label>
-                    <Entry x:Name="DescriptionInput"></Entry>
+                    <Editor x:Name="DescriptionInput"
+                           WidthRequest="400"
+                           HeightRequest="100"></Editor>
                 </HorizontalStackLayout>
                 
                 <ListView x:Name="FilesListView" />

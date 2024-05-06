@@ -11,16 +11,15 @@ namespace FS.Views;
 
 public partial class CreateTransferView : ContentPage
 {
-    private string o = "non loaded";
     private CreateTransferViewModel viewModel;
-    public IDictionary<string, (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)> SelectedFiles = new Dictionary<string,  (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
     
     public CreateTransferView(FileSenderServer fsServer)
     {
         InitializeComponent();
         viewModel = new CreateTransferViewModel(fsServer);
+
         //FilesListView = new ListView();
-        FilesListView.ItemsSource = SelectedFiles.Keys;
+        FilesListView.ItemsSource = viewModel.SelectedFiles.Keys;
     }
 
     private void SelectFiles(object sender, EventArgs e)
@@ -40,11 +39,11 @@ public partial class CreateTransferView : ContentPage
                 var file_task = fresult.OpenReadAsync();
                 //redo.Text = file_task.Result.Length.ToString();
                 Console.WriteLine(file_task.Status);
-                SelectedFiles[fresult.FullPath] = (fresult.ContentType,file_task,fresult.FullPath,fresult.FileName,file_task.Result.Length);
+                viewModel.SelectedFiles[fresult.FullPath] = (fresult.ContentType,file_task,fresult.FullPath,fresult.FileName,file_task.Result.Length);
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    FilesListView.ItemsSource = SelectedFiles.Keys;
-                    SelectFilesBtn.Text = SelectedFiles.Select(x => x.Key).Aggregate("", (x, y) => $"{x} {y}");
+                    FilesListView.ItemsSource = viewModel.SelectedFiles.Keys;
+                    SelectFilesBtn.Text = viewModel.SelectedFiles.Select(x => x.Value.FileName).Aggregate("", (x, y) => $"{x} {y}");
                 });
             }
             return pickAndShow;
@@ -58,10 +57,7 @@ public partial class CreateTransferView : ContentPage
 
     private async void SendFiles(object? sender, EventArgs eventArgs)
     {
-        var trans = viewModel.FSServer.SendTransfer(new string[]{EmailInput.Text},
-            SubjectInput.Text,
-            DescriptionInput.Text,
-            SelectedFiles.Select(x => x.Value).ToArray());
+        var trans = viewModel.SendTransfer(EmailInput.Text,SubjectInput.Text,DescriptionInput.Text);
         
         MainThread.BeginInvokeOnMainThread(() => {SendFilesBtn.Text = "Sending";});
         while (!trans.IsCompleted)
@@ -78,7 +74,7 @@ public partial class CreateTransferView : ContentPage
         {
             SendFilesBtn.Text = "Complete";
             SelectFilesBtn.Text = "Select Files";
-            SelectedFiles =
+            viewModel.SelectedFiles =
                 new Dictionary<string, (String MimeType, Task<Stream> FileStream, String FullPath, String FileName, long
                     FileSize)>();
         });
