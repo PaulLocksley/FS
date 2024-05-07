@@ -36,7 +36,6 @@ public partial class CreateTransferView : ContentPage
         {
             var result = await FilePicker.Default.PickMultipleAsync(new PickOptions());
             var pickAndShow = result as FileResult[] ?? result.ToArray();
-            Console.WriteLine("Breakhere.");
             foreach (var fresult in pickAndShow)
             {
                 var file_task = fresult.OpenReadAsync();
@@ -54,23 +53,22 @@ public partial class CreateTransferView : ContentPage
                     await toast.Show();
                     continue;
                 }
-
-                if (viewModel.FSServer.config.MaxTransferSize > viewModel.TotalFileSize + file_task.Result.Length)
+                
+                if ( viewModel.TotalFileSize + file_task.Result.Length > viewModel.FSServer.config.MaxTransferSize)
                 {
                     var toast = Toast.Make($"File {fresult.FileName} ignored, reason: Transfer over max file size.");
                     await toast.Show();
                     continue;
                 }
+                viewModel.TotalFileSize += file_task.Result.Length;
 
-                if (viewModel.FSServer.config.MaxFilesCount > viewModel.SelectedFiles.Count + 1)
+                if (viewModel.SelectedFiles.Count + 1 > viewModel.FSServer.config.MaxFilesCount)
                 {
                     var toast = Toast.Make($"File {fresult.FileName} ignored, reason: Transfer over max file count.");
                     await toast.Show();
                     continue;
                 }
-                viewModel.TotalFileSize += file_task.Result.Length;
                 
-                Console.WriteLine(file_task.Status);
                 viewModel.SelectedFiles[fresult.FullPath] = (fresult.ContentType,file_task,fresult.FullPath,fresult.FileName,file_task.Result.Length);
             }
             MainThread.BeginInvokeOnMainThread(() =>
@@ -79,10 +77,15 @@ public partial class CreateTransferView : ContentPage
                 SelectFilesBtn.Text = viewModel.SelectedFiles.Aggregate("", (x, y) => $"{x} {y.Value.FileName} {y.Value.FileSize}");
                 //SelectFilesBtn.Text = viewModel.SelectedFiles.Select(x => x.Value.FileName).Aggregate("", (x, y) => $"{x} {y}");
             });
+
+
             return pickAndShow;
         }
         catch (Exception ex)
         {
+            Debug.WriteLine(ex);
+            var toast = Toast.Make($"The program encountered an error selecting files.\n  {ex}.");
+            await toast.Show();
             // The user canceled or something went wrong
         }
         return new List<FileResult>();
