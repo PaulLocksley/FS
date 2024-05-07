@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -42,9 +43,16 @@ public partial class CreateTransferView : ContentPage
                 if (file_task.Result.Length == 0)
                 {
                     
-                    var toast = Toast.Make($"File {fresult.FileName} ignored as it is 0 bytes long.");
+                    var toast = Toast.Make($"File {fresult.FileName} ignored, reason: 0 bytes long.");
                     await toast.Show();
                     //todo: better solution for cloud files.
+                    continue;
+                }
+
+                if (viewModel.FSServer.config.BannedFileTypes.Contains(fresult.FileName.Split('.').Last()))
+                {
+                    var toast = Toast.Make($"File {fresult.FileName} ignored, reason: banned Filetype.");
+                    await toast.Show();
                     continue;
                 }
                 //redo.Text = file_task.Result.Length.ToString();

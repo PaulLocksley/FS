@@ -61,13 +61,14 @@ public static class FileSenderServerConfigFactory
         match = regex.Match(configText);
         if (match.Success)
         {
-            foreach (var extension in match.Groups[1].Value.Split(","))
+            var extensions = match.Groups[1].Value.Split(",");
+            foreach (var extension in extensions)
             {
                 bannedFileTypes.Add(extension);
             }
         }
 
         return new FileSenderServerConfig(baseUrl, username, apikey, chunkSize, siteName, defaultTransferDaysValid,
-            workerCount, workerRetries, maxFilesCount, maxTransferSize);
+            workerCount, workerRetries, maxFilesCount, maxTransferSize,bannedFileTypes);
     }
 }

@@ -12,7 +12,8 @@ public class FileSenderServerConfig(
     int workerCount,
     int workerRetries,
     int maxFilesCount,
-    long maxTransferSize)
+    long maxTransferSize,
+    List<string> bannedFileTypes)
 {
     public string BaseUrl = baseUrl;
     public string Username = username;
@@ -24,5 +25,5 @@ public class FileSenderServerConfig(
     public int WorkerRetries = workerRetries;
     public int MaxFilesCount = maxFilesCount;
     public long MaxTransferSize = maxTransferSize;
-    public IList<string> BannedFileTypes = new List<string>();
+    public IList<string> BannedFileTypes = bannedFileTypes;
 }
