@@ -24,7 +24,7 @@
         <ApplicationTitle>FS</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.fs</ApplicationId>
+        <ApplicationId>dev.locksley.fs</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -37,6 +37,10 @@
         <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tizen'">6.5</SupportedOSPlatformVersion>
     </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' " />
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' " />
 
     <ItemGroup>
         <!-- App Icon -->

@@ -36,14 +36,21 @@ public partial class CreateTransferView : ContentPage
             var pickAndShow = result as FileResult[] ?? result.ToArray();
             foreach (var fresult in pickAndShow)
             {
+                
                 var file_task = fresult.OpenReadAsync();
+                if (file_task.Result.Length == 0)
+                {
+                    //todo: better solution for cloud files.
+                    continue;
+                }
                 //redo.Text = file_task.Result.Length.ToString();
                 Console.WriteLine(file_task.Status);
                 viewModel.SelectedFiles[fresult.FullPath] = (fresult.ContentType,file_task,fresult.FullPath,fresult.FileName,file_task.Result.Length);
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
                     FilesListView.ItemsSource = viewModel.SelectedFiles.Keys;
-                    SelectFilesBtn.Text = viewModel.SelectedFiles.Select(x => x.Value.FileName).Aggregate("", (x, y) => $"{x} {y}");
+                    SelectFilesBtn.Text = viewModel.SelectedFiles.Aggregate("", (x, y) => $"{x} {y.Value.FileName} {y.Value.FileSize}");
+                    //SelectFilesBtn.Text = viewModel.SelectedFiles.Select(x => x.Value.FileName).Aggregate("", (x, y) => $"{x} {y}");
                 });
             }
             return pickAndShow;
