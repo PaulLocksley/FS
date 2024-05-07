@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CommunityToolkit.Maui.Alerts;
 using FS.Models;
 using FS.ViewModels;
 
@@ -40,6 +41,9 @@ public partial class CreateTransferView : ContentPage
                 var file_task = fresult.OpenReadAsync();
                 if (file_task.Result.Length == 0)
                 {
+                    
+                    var toast = Toast.Make($"File {fresult.FileName} ignored as it is 0 bytes long.");
+                    await toast.Show();
                     //todo: better solution for cloud files.
                     continue;
                 }
