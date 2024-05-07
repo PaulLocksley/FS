@@ -140,7 +140,13 @@ public partial class LoginView : ContentPage
             {
                 var tmp_vals = line.Split('=');
                 var key = tmp_vals[0].Trim();
-
+                //on windows the js returns "\n" as a literal string breaking the above. 
+                //Ios and Mac return \n as the newline char causing this difference.
+                if (key.Length > 1 && key[0] == 'n')
+                {
+                    key = key.Remove(0, 1);
+                }
+                
                 if (tmp_vals.Length != 2 || !allowed_keys.Contains(key))
                 {
                     Debug.WriteLine($"Skipping line: {line}");
