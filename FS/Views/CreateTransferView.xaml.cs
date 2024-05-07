@@ -36,13 +36,12 @@ public partial class CreateTransferView : ContentPage
         {
             var result = await FilePicker.Default.PickMultipleAsync(new PickOptions());
             var pickAndShow = result as FileResult[] ?? result.ToArray();
+            Console.WriteLine("Breakhere.");
             foreach (var fresult in pickAndShow)
             {
-                
                 var file_task = fresult.OpenReadAsync();
                 if (file_task.Result.Length == 0)
                 {
-                    
                     var toast = Toast.Make($"File {fresult.FileName} ignored, reason: 0 bytes long.");
                     await toast.Show();
                     //todo: better solution for cloud files.
@@ -55,16 +54,31 @@ public partial class CreateTransferView : ContentPage
                     await toast.Show();
                     continue;
                 }
-                //redo.Text = file_task.Result.Length.ToString();
+
+                if (viewModel.FSServer.config.MaxTransferSize > viewModel.TotalFileSize + file_task.Result.Length)
+                {
+                    var toast = Toast.Make($"File {fresult.FileName} ignored, reason: Transfer over max file size.");
+                    await toast.Show();
+                    continue;
+                }
+
+                if (viewModel.FSServer.config.MaxFilesCount > viewModel.SelectedFiles.Count + 1)
+                {
+                    var toast = Toast.Make($"File {fresult.FileName} ignored, reason: Transfer over max file count.");
+                    await toast.Show();
+                    continue;
+                }
+                viewModel.TotalFileSize += file_task.Result.Length;
+                
                 Console.WriteLine(file_task.Status);
                 viewModel.SelectedFiles[fresult.FullPath] = (fresult.ContentType,file_task,fresult.FullPath,fresult.FileName,file_task.Result.Length);
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    FilesListView.ItemsSource = viewModel.SelectedFiles.Keys;
-                    SelectFilesBtn.Text = viewModel.SelectedFiles.Aggregate("", (x, y) => $"{x} {y.Value.FileName} {y.Value.FileSize}");
-                    //SelectFilesBtn.Text = viewModel.SelectedFiles.Select(x => x.Value.FileName).Aggregate("", (x, y) => $"{x} {y}");
-                });
             }
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                FilesListView.ItemsSource = viewModel.SelectedFiles.Keys;
+                SelectFilesBtn.Text = viewModel.SelectedFiles.Aggregate("", (x, y) => $"{x} {y.Value.FileName} {y.Value.FileSize}");
+                //SelectFilesBtn.Text = viewModel.SelectedFiles.Select(x => x.Value.FileName).Aggregate("", (x, y) => $"{x} {y}");
+            });
             return pickAndShow;
         }
         catch (Exception ex)

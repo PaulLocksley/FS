@@ -20,7 +20,8 @@ public partial class CreateTransferViewModel : ObservableObject
     [ObservableProperty]
     private string description;
 
-    
+    [ObservableProperty] 
+    private long totalFileSize;
     
     public CreateTransferViewModel(FileSenderServer fsServer)
     {
