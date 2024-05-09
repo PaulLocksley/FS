@@ -13,12 +13,16 @@ public partial class MainPage : ContentPage
         InitializeComponent();
         var k = new Label
         {
-            Text = "Nooooooo"
+            Text = "Loading..."
         };
 
         VStack.Children.Add(k);
         this.Appearing += OnPageAppearing;
 
+        var login_button = new Button();
+        login_button.Text = "Login";
+        login_button.Clicked += OnPageAppearing;
+        VStack.Children.Add(login_button);
     }
     private void OnPageAppearing(object sender, EventArgs e)
     {
