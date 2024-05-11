@@ -56,8 +56,10 @@
                            WidthRequest="400"
                            HeightRequest="100"></Editor>
                 </HorizontalStackLayout>
-                
-                <ListView x:Name="FilesListView" />
+                <ScrollView HeightRequest="225">
+                    <VerticalStackLayout x:Name="FileContainer">
+                    </VerticalStackLayout>
+                </ScrollView>
                 <Button
                     x:Name="SelectFilesBtn"
                     Text="Select Files" 

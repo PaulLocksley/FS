@@ -1,7 +1,5 @@
 ﻿
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using FS.Models;
 
 namespace FS.ViewModels;
 public partial class CreateTransferViewModel : ObservableObject
@@ -43,4 +41,5 @@ public partial class CreateTransferViewModel : ObservableObject
     {
         return true;
     }
+    
 }
