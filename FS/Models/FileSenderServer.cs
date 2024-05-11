@@ -126,6 +126,13 @@ public class FileSenderServer
                 return request;
             }
 
+            if (method == HttpVerb.Delete)
+            {
+                var request = await client.DeleteAsync(url);
+                request.EnsureSuccessStatusCode();
+                return request;
+            }
+
             throw new NotImplementedException();
         }
         catch (Exception e)
@@ -144,16 +151,17 @@ public class FileSenderServer
         }
     }
 
-    public async Task SendTransfer(string[] recepients,string subject,string message,(String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)[] files)
+    public async Task<Transfer> CreateTransfer(string[] recepients, string subject, string message,
+        (String MimeType, Task<Stream> FileStream, String FullPath, String FileName, long FileSize, string fileID)[] files)
     {
         Debug.WriteLine($"starting test transfer");
         if (files.Length == 0)
         {
-            return;
+            throw new InvalidDataException("Files list is empty, cannot create transfer");
         }
 
         var transferContent = new Dictionary<string, object>();
-        transferContent["from"] = "john@locksley.dev";
+        transferContent["from"] = config.Username;
         
         var backTrace = new Dictionary<string, (string MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
         
@@ -165,8 +173,7 @@ public class FileSenderServer
             tmpFile["size"] = f_info.FileSize.ToString();
             tmpFile["mime_type"] = f_info.MimeType;
 
-            tmpFile["cid"] = Guid.NewGuid().ToString();
-            backTrace[tmpFile["cid"]] = f_info;
+            tmpFile["cid"] = f_info.fileID;
             filesObject.Add(tmpFile);
         }
 
@@ -196,6 +203,15 @@ public class FileSenderServer
             throw new ApplicationException("Server failed to validate transfer");
         }
         Debug.WriteLine($"Transfer obj {transferResponse}");
+        return transferResponse;
+    }
+    public async Task SendTransfer(IDictionary<string,Task<Stream>>files, Transfer transferResponse, CancellationToken cancellationToken)
+    {
+        cancellationToken.Register(() =>
+        {
+            DeleteTransfer(transferResponse);//todo, think about this.
+        });
+
 
         _countdown = new CountdownEvent(transferResponse.Files.Aggregate(0,(i,f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize)));
         _initialCount = transferResponse.Files.Aggregate(0, (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize));
@@ -207,7 +223,7 @@ public class FileSenderServer
             {
                 await _semaphore.WaitAsync();
                 ThreadPool.QueueUserWorkItem(SendChunk,
-                    new object[] { backTrace[f.Cid!].FileStream, i, f, transferResponse.Roundtriptoken });
+                    new object[] { files[f.Cid], i, f, transferResponse.Roundtriptoken });
             }
         }
         Console.WriteLine(_countdown.InitialCount);
@@ -238,6 +254,19 @@ public class FileSenderServer
         var transferCompleteText = await transferCompleteCall.Content.ReadAsStringAsync();
         Debug.WriteLine(transferCompleteText);
     }
+    
+    public async Task DeleteTransfer(Transfer transfer)
+    {
+        Debug.WriteLine("Starting delete");
+        var p = await Call(HttpVerb.Delete, 
+            $"/transfer/{transfer.Id}",
+            new Dictionary<string, string>{{"key",transfer.Files.First().Uid.ToString()}},
+            null,null,new Dictionary<string, string>()
+        );
+        Debug.WriteLine(await p.Content.ReadAsStringAsync());
+        return;
+    }
+    
 
     public static string CleanFileName(string name)
     {
@@ -246,9 +275,6 @@ public class FileSenderServer
 
     private async void SendChunk(object state)
     {
-        // Wait for semaphore
-        //await semaphore.WaitAsync();
-
         try
         {
             object[] parameters = (object[])state;
@@ -291,6 +317,8 @@ public class FileSenderServer
             _countdown.Signal();
         }
     }
+
+
 
     public Double getProgressPercent()
     {

@@ -72,7 +72,7 @@ public partial class CreateTransferView : ContentPage
                     continue;
                 }
                 
-                viewModel.SelectedFiles[fresult.FullPath] = (fresult.ContentType,file_task,fresult.FullPath,fresult.FileName,file_task.Result.Length);
+                viewModel.SelectedFiles[fresult.FullPath] = (fresult.ContentType,file_task,fresult.FullPath,fresult.FileName,file_task.Result.Length,Guid.NewGuid().ToString());
             }
             
             UpdateFileList();
@@ -112,7 +112,11 @@ public partial class CreateTransferView : ContentPage
             container.Add(fileSize);
 
             var deleteButton = new Button();
-            deleteButton.Text = "X";
+            deleteButton.Text = "\u2796";
+            deleteButton.BackgroundColor = Colors.DarkGray;
+            deleteButton.FontAttributes = FontAttributes.Bold;
+            
+            //deleteButton.FontSize = 10;
             deleteButton.CommandParameter = file.Key;
             deleteButton.Clicked += DeleteFile;
             deleteButton.HeightRequest = 15;
@@ -154,8 +158,8 @@ public partial class CreateTransferView : ContentPage
 
     private async void SendFiles(object? sender, EventArgs eventArgs)
     {
-        var trans = viewModel.SendTransfer(EmailInput.Text,SubjectInput.Text,DescriptionInput.Text);
-        
+        viewModel.TransferCancellationToken = new CancellationTokenSource();
+        var trans = viewModel.SendTransfer(EmailInput.Text,SubjectInput.Text,DescriptionInput.Text,viewModel.TransferCancellationToken.Token);
         MainThread.BeginInvokeOnMainThread(() => {SendFilesBtn.Text = "Sending";});
         while (!trans.IsCompleted)
         {
@@ -173,7 +177,7 @@ public partial class CreateTransferView : ContentPage
             SelectFilesBtn.Text = "Select Files";
             viewModel.SelectedFiles =
                 new Dictionary<string, (String MimeType, Task<Stream> FileStream, String FullPath, String FileName, long
-                    FileSize)>();
+                    FileSize,string fileID)>();
         });
         var toast = Toast.Make($"Transfer complete.");
         toast.Show();
