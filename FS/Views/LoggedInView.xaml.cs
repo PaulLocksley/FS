@@ -14,7 +14,7 @@ public partial class LoggedInView : TabbedPage
         //var tabbedPage = new TabbedPage();
         TabGroup.Children.Add(new CreateTransferView(fsServer));
         TabGroup.Children.Add(new TransfersView());
-
+        TabGroup.Children.Add(new AccountInformationView(fsServer));
 
     }
 }
