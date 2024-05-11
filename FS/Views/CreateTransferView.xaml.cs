@@ -114,6 +114,7 @@ public partial class CreateTransferView : ContentPage
                 new Dictionary<string, (String MimeType, Task<Stream> FileStream, String FullPath, String FileName, long
                     FileSize)>();
         });
-
+        var toast = Toast.Make($"Transfer complete.");
+        toast.Show();
     }
 }
