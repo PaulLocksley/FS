@@ -95,6 +95,8 @@ public partial class CreateTransferView : ContentPage
         foreach (var file in viewModel.SelectedFiles)
         {
             var container = new HorizontalStackLayout();
+            viewModel.FileListIndex[file.Key] = container.Id;
+            container.AutomationId = container.Id.ToString();
             var name = new Label();
             name.Text = file.Value.FileName;
             name.WidthRequest = 150;
@@ -144,7 +146,10 @@ public partial class CreateTransferView : ContentPage
         if (!viewModel.SelectedFiles.ContainsKey(key)) return;
         
         viewModel.SelectedFiles.Remove(key);
-        UpdateFileList();
+        var viewID = viewModel.FileListIndex[key];
+        viewModel.FileListIndex.Remove(key);
+        var view = FileContainer.Children.First(x => x.AutomationId == viewID.ToString());
+        MainThread.BeginInvokeOnMainThread(() => {  FileContainer.Remove(view); });
     }
 
     private async void SendFiles(object? sender, EventArgs eventArgs)
@@ -172,5 +177,6 @@ public partial class CreateTransferView : ContentPage
         });
         var toast = Toast.Make($"Transfer complete.");
         toast.Show();
+        UpdateFileList();
     }
 }

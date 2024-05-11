@@ -20,6 +20,9 @@ public partial class CreateTransferViewModel : ObservableObject
 
     [ObservableProperty] 
     private long totalFileSize;
+
+    [ObservableProperty]
+    private IDictionary<string, Guid> fileListIndex = new Dictionary<string, Guid>();
     
     public CreateTransferViewModel(FileSenderServer fsServer)
     {
