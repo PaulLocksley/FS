@@ -91,47 +91,52 @@ public partial class CreateTransferView : ContentPage
 
     private void UpdateFileList()
     {
+        var fileList = new List<IView>();
+        foreach (var file in viewModel.SelectedFiles)
+        {
+            var container = new HorizontalStackLayout();
+            var name = new Label();
+            name.Text = file.Value.FileName;
+            name.WidthRequest = 150;
+            name.LineBreakMode = LineBreakMode.CharacterWrap;
+            name.FontSize = 12;
+            name.HorizontalOptions = LayoutOptions.Start;
+            container.Add(name);
+
+            var fileSize = new Label();
+            fileSize.Text = FileSize.getHumanFileSize(file.Value.FileSize);
+            fileSize.WidthRequest = 50;
+            fileSize.Margin = new Thickness(10, 0, 0, 0);
+            container.Add(fileSize);
+
+            var deleteButton = new Button();
+            deleteButton.Text = "X";
+            deleteButton.CommandParameter = file.Key;
+            deleteButton.Clicked += DeleteFile;
+            deleteButton.HeightRequest = 15;
+            deleteButton.WidthRequest = 15;
+            deleteButton.HorizontalOptions = LayoutOptions.End;
+            deleteButton.Margin = new Thickness(40,5,0,5);
+                                
+            container.Add(deleteButton);
+            container.HorizontalOptions = LayoutOptions.Fill;
+                
+            fileList.Add(container);
+        }
         MainThread.BeginInvokeOnMainThread(() =>
         {
             FileContainer.Children.Clear();
-            foreach (var file in viewModel.SelectedFiles)
+            foreach (var view in fileList)
             {
-                
-                var container = new HorizontalStackLayout();
-                var name = new Label();
-                name.Text = file.Value.FileName;
-                name.WidthRequest = 150;
-                name.LineBreakMode = LineBreakMode.CharacterWrap;
-                name.FontSize = 12;
-                name.HorizontalOptions = LayoutOptions.Start;
-                container.Add(name);
-
-                var fileSize = new Label();
-                fileSize.Text = FileSize.getHumanFileSize(file.Value.FileSize);
-                fileSize.WidthRequest = 50;
-                fileSize.Margin = new Thickness(10, 0, 0, 0);
-                container.Add(fileSize);
-
-                var deleteButton = new Button();
-                deleteButton.Text = "X";
-                deleteButton.CommandParameter = file.Key;
-                deleteButton.Clicked += DeleteFile;
-                deleteButton.HeightRequest = 15;
-                deleteButton.WidthRequest = 15;
-                deleteButton.HorizontalOptions = LayoutOptions.End;
-                deleteButton.Margin = new Thickness(40,5,0,5);
-                                
-                container.Add(deleteButton);
-                container.HorizontalOptions = LayoutOptions.Fill;
-                
-                FileContainer.Children.Add(container);
+                FileContainer.Children.Add(view);
             }
+            
             //SelectFilesBtn.Text = viewModel.SelectedFiles.Select(x => x.Value.FileName).Aggregate("", (x, y) => $"{x} {y}");
         });
         
     }
 
-    private void DeleteFile(object? sender, EventArgs eventArgs)
+    private async void DeleteFile(object? sender, EventArgs eventArgs)
     {
         System.Reflection.PropertyInfo pi = sender.GetType().GetProperty("CommandParameter");
         string key = (string)(pi.GetValue(sender, null));

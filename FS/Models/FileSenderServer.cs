@@ -296,6 +296,6 @@ public class FileSenderServer
     {
         var k = (double)_currentCount / (double)_initialCount - 1;
         var l = k * -1;
-        return l;
+        return Math.Clamp(Math.Round(l,4),0,1);
     }
 }
