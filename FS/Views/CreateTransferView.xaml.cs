@@ -18,6 +18,7 @@ public partial class CreateTransferView : ContentPage
     public CreateTransferView(FileSenderServer fsServer)
     {
         InitializeComponent();
+        Title = "Create Transfer";
         viewModel = new CreateTransferViewModel(fsServer);
 
         //FilesListView = new ListView();

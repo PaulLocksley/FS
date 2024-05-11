@@ -35,13 +35,9 @@ public partial class MainPage : ContentPage
         {
             var config = await FileSenderServerConfigFactory.BuildConfig();
             var fsServer = new FileSenderServer(config);
-            Debug.WriteLine("loaded");
-            /*MainThread.BeginInvokeOnMainThread(() =>
-            {
-                VStack.Children.Clear();
-                VStack.Children.Add(new CreateTransfereView(fsServer));
-            });*/
-            Application.Current.MainPage = new CreateTransferView(fsServer);
+            Debug.WriteLine("loaded main page");
+
+            Application.Current.MainPage = new LoggedInView(fsServer);
 
         }
         catch(Exception e)
