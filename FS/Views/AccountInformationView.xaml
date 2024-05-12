@@ -4,6 +4,27 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="FS.Views.AccountInformationView">
     <ContentPage.Content>
-        
+        <Grid Padding="100" HorizontalOptions="Center">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="25" />
+                <RowDefinition Height="50" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="50" />
+                <ColumnDefinition Width="200" />
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" HorizontalOptions="Center" x:Name="InstanceName" Style="{StaticResource Headline}"></Label>
+
+            <Image Grid.Row="1" Grid.Column="0" Source="public_globe.png" WidthRequest="14" VerticalOptions="Center"></Image>
+            <Label Grid.Row="1" Grid.Column="1" x:Name="InstanceUrl" VerticalOptions="Center"></Label>
+
+            <Image Grid.Row="2" Grid.Column="0" Source="mail.png" WidthRequest="14" VerticalOptions="Center"></Image>
+            <Label Grid.Row="2" Grid.Column="1" x:Name="UserId" VerticalOptions="Center"></Label>
+            <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="Log out" Clicked="LogOut"/>
+        </Grid>
     </ContentPage.Content>
 </ContentPage>

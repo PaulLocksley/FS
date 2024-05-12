@@ -21,12 +21,16 @@ public partial class MainPage : ContentPage
 
         var login_button = new Button();
         login_button.Text = "Login";
-        login_button.Clicked += OnPageAppearing;
+        login_button.Clicked += Login;
         VStack.Children.Add(login_button);
     }
     private void OnPageAppearing(object sender, EventArgs e)
     {
         LoadConfig();
+    }
+    private void Login(object sender, EventArgs e)
+    {
+        Navigation.PushAsync(new LoginView());
     }
 
     private async void LoadConfig()
