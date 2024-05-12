@@ -9,9 +9,10 @@ namespace FS.Views;
 
 public partial class TransfersView : ContentPage
 {
-    private TransfersViewModel viewModel = new TransfersViewModel();
-    public TransfersView()
+    private TransfersViewModel viewModel;
+    public TransfersView(FileSenderServer FSServer)
     {
+        viewModel = new TransfersViewModel(FSServer);
         InitializeComponent();
         Appearing += OnPageAppearing;
         Title = "Past Transfers";

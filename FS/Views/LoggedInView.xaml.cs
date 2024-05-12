@@ -13,7 +13,7 @@ public partial class LoggedInView : TabbedPage
         InitializeComponent();
         //var tabbedPage = new TabbedPage();
         TabGroup.Children.Add(new CreateTransferView(fsServer));
-        TabGroup.Children.Add(new TransfersView());
+        TabGroup.Children.Add(new TransfersView(fsServer));
         TabGroup.Children.Add(new AccountInformationView(fsServer));
 
     }

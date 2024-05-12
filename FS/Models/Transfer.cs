@@ -8,19 +8,19 @@
  public partial class Transfer
  {
      [JsonPropertyName("id")]
-     public long Id { get; set; }
+     public int Id { get; set; }
 
      [JsonPropertyName("userid")]
-     public long Userid { get; set; }
+     public int Userid { get; set; }
 
      [JsonPropertyName("user_email")]
      public string UserEmail { get; set; }
 
      [JsonPropertyName("subject")]
-     public string Subject { get; set; }
+     public string? Subject { get; set; }
 
      [JsonPropertyName("message")]
-     public string Message { get; set; }
+     public string? Message { get; set; }
 
      [JsonPropertyName("options")]
      public IDictionary<string,bool>? Options { get; set; }
@@ -41,7 +41,7 @@
  public partial class TransferFile
  {
      [JsonPropertyName("id")]
-     public long Id { get; set; }
+     public int Id { get; set; }
 
      [JsonPropertyName("uid")]
      public Guid Uid { get; set; }
@@ -50,7 +50,8 @@
      public string Name { get; set; }
 
      [JsonPropertyName("size")]
-     [JsonConverter(typeof(ParseStringConverter))]
+     [JsonConverter(typeof(CustomLongConverter))]
+
      public long Size { get; set; }
 
      [JsonPropertyName("cid")]
@@ -72,17 +73,19 @@
      public string Email { get; set; }
 
 
-     [JsonPropertyName("last_activity")]
-     public object LastActivity { get; set; }
+     /*[JsonPropertyName("last_activity")]
+     public object LastActivity { get; set; }*/
 
+     /*
      [JsonPropertyName("options")]
      public object Options { get; set; }
+     */
 
      [JsonPropertyName("download_url")]
      public Uri DownloadUrl { get; set; }
 
-     [JsonPropertyName("errors")]
-     public object[] Errors { get; set; }
+     /*[JsonPropertyName("errors")]
+     public object[] Errors { get; set; }*/
  }
 
  public partial class Transfer
@@ -107,29 +110,36 @@
          },
      };
  }
-
- internal class ParseStringConverter : JsonConverter<long>
+ class CustomLongConverter : JsonConverter<long>
  {
-     public override bool CanConvert(Type t) => t == typeof(long);
-
+     //The transfer api endpoint gives me a number but the create transfer endpoint gives me a string....
      public override long Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
      {
-         var value = reader.GetString();
-         long l;
-         if (Int64.TryParse(value, out l))
+         if (reader.TokenType == JsonTokenType.String)
          {
-             return l;
+             if (long.TryParse(reader.GetString(), out long result))
+             {
+                 return result;
+             }
+             else
+             {
+                 throw new JsonException($"Unable to parse '{reader.GetString()}' as long.");
+             }
          }
-         throw new Exception("Cannot unmarshal type long");
+         else if (reader.TokenType == JsonTokenType.Number)
+         {
+             return reader.GetInt64();
+         }
+         else
+         {
+             throw new JsonException($"Unexpected token type: {reader.TokenType}");
+         }
      }
 
      public override void Write(Utf8JsonWriter writer, long value, JsonSerializerOptions options)
      {
-         JsonSerializer.Serialize(writer, value.ToString(), options);
-         return;
+         writer.WriteStringValue(value.ToString());
      }
-
-     public static readonly ParseStringConverter Singleton = new ParseStringConverter();
  }
  
  public class DateOnlyConverter : JsonConverter<DateOnly>

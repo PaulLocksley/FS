@@ -154,6 +154,7 @@ public class FileSenderServer
     public async Task<Transfer> CreateTransfer(string[] recepients, string subject, string message,
         (String MimeType, Task<Stream> FileStream, String FullPath, String FileName, long FileSize, string fileID)[] files)
     {
+        
         Debug.WriteLine($"starting test transfer");
         if (files.Length == 0)
         {
@@ -196,7 +197,7 @@ public class FileSenderServer
         createTransferCall.EnsureSuccessStatusCode();
         var transferResponseText = await createTransferCall.Content.ReadAsStringAsync();
         Debug.WriteLine($"Transfer response {transferResponseText}");
-
+        
         var transferResponse = JsonSerializer.Deserialize<Transfer>(transferResponseText);
         if (transferResponse is null)
         {
@@ -278,6 +279,18 @@ public class FileSenderServer
         return;
     }
     
+    public async Task<Transfer[]> GetAllTransfers()
+    {
+        var transfersRequest = await Call(HttpVerb.Get, "/transfer", new Dictionary<string, string>(), null, null,
+            new Dictionary<string, string>());
+        var responseText = await transfersRequest.Content.ReadAsStringAsync();
+        var transfers = JsonSerializer.Deserialize<Transfer[]>(responseText);
+        if (transfers is null)
+        {
+            throw new ApplicationException("Server failed to get transfers");
+        }
+        return transfers;
+    }
 
     public static string CleanFileName(string name)
     {
