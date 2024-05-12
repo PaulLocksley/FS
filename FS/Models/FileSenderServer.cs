@@ -212,47 +212,58 @@ public class FileSenderServer
             DeleteTransfer(transferResponse);//todo, think about this.
         });
 
-
-        _countdown = new CountdownEvent(transferResponse.Files.Aggregate(0,(i,f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize)));
-        _initialCount = transferResponse.Files.Aggregate(0, (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize));
-        _currentCount = _initialCount;
-
-        foreach (var f in transferResponse.Files)
+        try
         {
-            for (long i = 0; i < f.Size; i += config.ChunkSize)
+            _countdown = new CountdownEvent(transferResponse.Files.Aggregate(0,
+                (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize)));
+            _initialCount = transferResponse.Files.Aggregate(0,
+                (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize));
+            _currentCount = _initialCount;
+
+            foreach (var f in transferResponse.Files)
             {
-                await _semaphore.WaitAsync();
-                ThreadPool.QueueUserWorkItem(SendChunk,
-                    new object[] { files[f.Cid], i, f, transferResponse.Roundtriptoken });
+                for (long i = 0; i < f.Size; i += config.ChunkSize)
+                {
+                    await _semaphore.WaitAsync();
+                    ThreadPool.QueueUserWorkItem(SendChunk,
+                        new object[] { files[f.Cid], i, f, transferResponse.Roundtriptoken });
+                }
             }
-        }
-        Console.WriteLine(_countdown.InitialCount);
-        Console.WriteLine(_countdown.CurrentCount);
-        _countdown.Wait();
-        foreach (var f in transferResponse.Files){
-            var fileCompleteCall = await Call(HttpVerb.Put,
-                $"/file/{f.Id}",
+
+            Console.WriteLine(_countdown.InitialCount);
+            Console.WriteLine(_countdown.CurrentCount);
+            _countdown.Wait();
+            foreach (var f in transferResponse.Files)
+            {
+                var fileCompleteCall = await Call(HttpVerb.Put,
+                    $"/file/{f.Id}",
+                    new Dictionary<string, string>
+                    {
+                        { "key", f.Uid.ToString() },
+                        { "roundtriptoken", transferResponse.Roundtriptoken }
+                    },
+                    new Dictionary<string, object> { { "complete", true } },
+                    null, new Dictionary<string, string>());
+                fileCompleteCall.EnsureSuccessStatusCode();
+            }
+
+            var transferCompleteCall = await Call(HttpVerb.Put,
+                $"/transfer/{transferResponse.Id}",
                 new Dictionary<string, string>
                 {
-                    { "key", f.Uid.ToString() },
-                    { "roundtriptoken", transferResponse.Roundtriptoken }
+                    { "key", transferResponse.Files[0].Uid.ToString() },
                 },
                 new Dictionary<string, object> { { "complete", true } },
                 null, new Dictionary<string, string>());
-            fileCompleteCall.EnsureSuccessStatusCode();
+            transferCompleteCall.EnsureSuccessStatusCode();
+            var transferCompleteText = await transferCompleteCall.Content.ReadAsStringAsync();
+            Debug.WriteLine(transferCompleteText);
         }
-
-        var transferCompleteCall = await Call(HttpVerb.Put,
-            $"/transfer/{transferResponse.Id}",
-            new Dictionary<string, string>
-            {
-                { "key", transferResponse.Files[0].Uid.ToString() },
-            },
-            new Dictionary<string, object> { { "complete", true } },
-            null, new Dictionary<string, string>());
-        transferCompleteCall.EnsureSuccessStatusCode();
-        var transferCompleteText = await transferCompleteCall.Content.ReadAsStringAsync();
-        Debug.WriteLine(transferCompleteText);
+        catch (Exception e)
+        {
+            Debug.WriteLine(e);
+            DeleteTransfer(transferResponse);
+        }
     }
     
     public async Task DeleteTransfer(Transfer transfer)
