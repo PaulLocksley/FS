@@ -9,6 +9,10 @@
             <ListView ItemsSource="{Binding Transfers}"
                       ItemTapped="InspectTransfer" 
                       HasUnevenRows="true" 
+                      IsRefreshing="{Binding IsRefreshing}"
+                      RefreshCommand="{Binding RefreshData}"
+                      IsPullToRefreshEnabled="True"
+                      x:Name="TransferListView"
                       >
                 <ListView.ItemTemplate>
                     <DataTemplate>

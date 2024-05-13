@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using FS.Models;
 
 namespace FS.ViewModels;
@@ -11,19 +12,18 @@ public partial class TransfersViewModel : ObservableObject
     
     [ObservableProperty]
     public Transfer[] transfers = [];
-    public async Task ReloadConfig()
+
+    [ObservableProperty] private bool isRefreshing = false;
+
+    [RelayCommand]
+    public async Task RefreshData()
     {
+        IsRefreshing = true;
         Transfers = await FSServer.GetAllTransfers();
-
+        IsRefreshing = false;
     }
-
     public TransfersViewModel(FileSenderServer fsServer)
     {
         FSServer = fsServer;
-    }
-    public TransfersViewModel()
-    {
-        FSServer = new FileSenderServer(new FileSenderServerConfig("",
-            "","",23,"",232323,1,12,1,1,new List<string>()));
     }
 }

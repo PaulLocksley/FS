@@ -19,11 +19,17 @@ public partial class TransfersView : ContentPage
         BindingContext = viewModel;
         Appearing += OnPageAppearing;
         Title = "Past Transfers";
+        
+        //TransferListView.RefreshCommand = refreshList();
     }
     
+
     private void OnPageAppearing(object sender, EventArgs e)
     {
-        viewModel.ReloadConfig();
+        if (viewModel.Transfers.Length == 0)
+        {
+            viewModel.RefreshData();
+        }
     }
     async void InspectTransfer(object? sender, ItemTappedEventArgs itemTappedEventArgs)
     {
