@@ -1,4 +1,6 @@
-﻿namespace FS.Models;
+﻿using System.Diagnostics;
+
+namespace FS.Models;
 
  using System.Collections.Generic;
  using System.Text.Json;
@@ -36,6 +38,27 @@
 
      [JsonPropertyName("recipients")]
      public Recipient[] Recipients { get; set; }
+
+     public String ViewRecipients
+     {
+         get
+         {
+             return string.Join(", ", Recipients.Select(x => x.Email)); //.Aggregate((x, y) => $"{x}, {y}"));
+         }
+     }
+
+     public String ViewFiles
+     {
+         get
+         {
+             var tmp = string.Join("\n", Files.Take(3).Select(x => x.Name));//.Aggregate((x, y) => $"{x}\n{y}"));
+             if (Files.Length > 3)
+             {
+                 tmp += "....";
+             }
+             return  tmp;
+         }
+     }
  }
 
  public partial class TransferFile

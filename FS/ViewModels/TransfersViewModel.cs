@@ -14,6 +14,7 @@ public partial class TransfersViewModel : ObservableObject
     public async Task ReloadConfig()
     {
         Transfers = await FSServer.GetAllTransfers();
+
     }
 
     public TransfersViewModel(FileSenderServer fsServer)

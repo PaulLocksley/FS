@@ -14,6 +14,7 @@ public partial class TransfersView : ContentPage
     {
         viewModel = new TransfersViewModel(FSServer);
         InitializeComponent();
+        BindingContext = viewModel;
         Appearing += OnPageAppearing;
         Title = "Past Transfers";
     }
