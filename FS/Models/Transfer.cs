@@ -43,7 +43,7 @@ namespace FS.Models;
      {
          get
          {
-             return string.Join(", ", Recipients.Select(x => x.Email)); //.Aggregate((x, y) => $"{x}, {y}"));
+             return string.Join(", ", Recipients.Select(x => x.Email));;
          }
      }
 
@@ -51,10 +51,10 @@ namespace FS.Models;
      {
          get
          {
-             var tmp = string.Join("\n", Files.Take(3).Select(x => x.Name));//.Aggregate((x, y) => $"{x}\n{y}"));
+             var tmp = string.Join("\n", Files.Take(3).Select(x => x.Name));
              if (Files.Length > 3)
              {
-                 tmp += "....";
+                 tmp += Files.Length == 4 ? $"\n{Files[3].Name}" : "\n....";
              }
              return  tmp;
          }

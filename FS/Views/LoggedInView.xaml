@@ -5,5 +5,6 @@
              xmlns:views="clr-namespace:FS.Views"
              x:Class="FS.Views.LoggedInView"
              x:Name="TabGroup">
-
+                    
+    
 </TabbedPage>

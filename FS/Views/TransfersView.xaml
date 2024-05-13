@@ -3,34 +3,46 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="FS.Views.TransfersView">
-
     <ContentPage.Content>
-        <StackLayout Margin="20">
-            <ListView ItemsSource="{Binding Transfers}">
+        <ScrollView>
+        <VerticalStackLayout Margin="20" >
+            <ListView ItemsSource="{Binding Transfers}"
+                      ItemTapped="InspectTransfer" 
+                      HasUnevenRows="true" 
+                      >
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
-                            <Grid Padding="10">
+                            <Grid Padding="10"  >
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
+                                <!--
                                 <ColumnDefinition Width="30" />
-                                <ColumnDefinition Width="Auto" />
+                                -->
+                                <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="30" />
                             </Grid.ColumnDefinitions>
-                            <Label Grid.Column="1" Text="{Binding Subject}" Padding="5,2"></Label>
-                            <Label Grid.Row="1" Grid.Column="1" Text="{Binding ViewRecipients}" Padding="5,2"></Label>
-                            <Label Grid.Row="2" Grid.Column="1" Text="{Binding ViewFiles}" Padding="5,2"></Label>
-                            <Image Grid.Row="0" Grid.Column="2" Grid.RowSpan="3" Source="arrow_forward.png" VerticalOptions="Center" HorizontalOptions="End"></Image>
+                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding Subject}" FontSize="20" HorizontalOptions="Start" Padding="5,2"></Label>
+                            <!--
+                            <Image Grid.Row="1" Grid.Column="0" Source="mail.png" WidthRequest="14" VerticalOptions="Center"></Image>
+                            -->
+                            <Label Grid.Row="1" Grid.Column="0" Text="{Binding ViewRecipients}" Padding="5,2"></Label>
+                            <!--
+                            <Image Grid.Row="2" Grid.Column="0" Source="file_cab.png" WidthRequest="14" VerticalOptions="Center"></Image>
+                            -->
+                            <Label Grid.Row="2" Grid.Column="0" Text="{Binding ViewFiles}" Padding="5,2"></Label>
+                            <Image Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Source="arrow_forward.png" VerticalOptions="Center" HorizontalOptions="End"></Image>
                         </Grid>
                         </ViewCell>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-        </StackLayout>
-
+            <Label Text="" Margin="0,30"></Label>
+        </VerticalStackLayout>
+        </ScrollView>
     </ContentPage.Content>
 </ContentPage>

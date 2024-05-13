@@ -40,8 +40,7 @@ public partial class MainPage : ContentPage
             var config = await FileSenderServerConfigFactory.BuildConfig();
             var fsServer = new FileSenderServer(config);
             Debug.WriteLine("loaded main page");
-
-            Application.Current.MainPage = new LoggedInView(fsServer);
+            App.Current.MainPage = new LoggedInView(fsServer);
 
         }
         catch(Exception e)

@@ -11,9 +11,12 @@ public partial class LoggedInView : TabbedPage
     public LoggedInView(FileSenderServer fsServer)
     {
         InitializeComponent();
+        
         //var tabbedPage = new TabbedPage();
         TabGroup.Children.Add(new CreateTransferView(fsServer));
-        TabGroup.Children.Add(new TransfersView(fsServer));
+        var transfers = new NavigationPage(new TransfersView(fsServer));
+        transfers.Title = "Transfers";
+        TabGroup.Children.Add(transfers);
         TabGroup.Children.Add(new AccountInformationView(fsServer));
 
     }
