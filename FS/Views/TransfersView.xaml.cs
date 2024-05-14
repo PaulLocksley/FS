@@ -19,8 +19,6 @@ public partial class TransfersView : ContentPage
         BindingContext = viewModel;
         Appearing += OnPageAppearing;
         Title = "Past Transfers";
-        
-        //TransferListView.RefreshCommand = refreshList();
     }
     
 

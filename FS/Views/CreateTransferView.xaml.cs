@@ -23,6 +23,7 @@ public partial class CreateTransferView : ContentPage
         InitializeComponent();
         Title = "Create Transfer";
         viewModel = new CreateTransferViewModel(fsServer);
+        BindingContext = viewModel;
 
         
     }
@@ -179,7 +180,10 @@ public partial class CreateTransferView : ContentPage
                 new Dictionary<string, (String MimeType, Task<Stream> FileStream, String FullPath, String FileName, long
                     FileSize,string fileID)>();
         });
-        var toast = Toast.Make($"Transfer complete.");
+        var toastText = viewModel.TransferCancellationToken.IsCancellationRequested
+            ? "Transfer Cancelled"
+            : "Transfer Complete";
+        var toast = Toast.Make(toastText);
         toast.Show();
         UpdateFileList();
     }

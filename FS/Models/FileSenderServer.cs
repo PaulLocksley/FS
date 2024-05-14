@@ -38,7 +38,7 @@ public class FileSenderServer
         return sb; //sb.Aggregate(" ",(y,x) => $"{y}&{x}").ToString();
     }
 
-    async Task<HttpResponseMessage> Call(HttpVerb method,string path, IDictionary<string,string> queryParams, IDictionary<string,object>? content, byte[]? rawContent, Dictionary<string,string> options,int tryCount = 0)
+    async Task<HttpResponseMessage> Call(HttpVerb method,string path, IDictionary<string,string> queryParams, IDictionary<string,object>? content, byte[]? rawContent, Dictionary<string,string> options,CancellationToken cancellationToken = new CancellationToken(),int tryCount = 0)
     {
         try
         {
@@ -109,19 +109,19 @@ public class FileSenderServer
             HttpResponseMessage? response = null;
             if (method == HttpVerb.Get)
             {
-                return await client.GetAsync(url);
+                return await client.GetAsync(url,cancellationToken);
             }
 
             ;
             if (method == HttpVerb.Post)
             {
                 //response = await client.PostAsync(url,new ByteArrayContent(inputContent ?? []));
-                return await client.PostAsync(url, put_content);
+                return await client.PostAsync(url, put_content,cancellationToken);
             }
 
             if (method == HttpVerb.Put)
             {
-                var request = await client.PutAsync(url, put_content);
+                var request = await client.PutAsync(url, put_content,cancellationToken);
                 request.EnsureSuccessStatusCode();
                 return request;
             }
@@ -138,6 +138,10 @@ public class FileSenderServer
         catch (Exception e)
         {
             Debug.WriteLine(e);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return new HttpResponseMessage();
+            }
             if (tryCount > 5)
             {
                 throw new Exception($"""
@@ -147,7 +151,7 @@ public class FileSenderServer
             }
 
             await Task.Delay(10000);
-            return await Call(method, path, queryParams.Where(x => x.Key != "signature").ToDictionary(), content, rawContent, options, tryCount + 1);
+            return await Call(method, path, queryParams.Where(x => x.Key != "signature").ToDictionary(), content, rawContent, options, cancellationToken,tryCount + 1);
         }
     }
 
@@ -211,6 +215,7 @@ public class FileSenderServer
         cancellationToken.Register(() =>
         {
             DeleteTransfer(transferResponse);//todo, think about this.
+            return;
         });
 
         try
@@ -226,13 +231,18 @@ public class FileSenderServer
                 for (long i = 0; i < f.Size; i += config.ChunkSize)
                 {
                     await _semaphore.WaitAsync();
+                    Debug.WriteLine("New file chunk queued");
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        _initialCount = 0;
+                        _currentCount = 1;
+                        return;
+                    }
                     ThreadPool.QueueUserWorkItem(SendChunk,
-                        new object[] { files[f.Cid], i, f, transferResponse.Roundtriptoken });
+                        new object[] { files[f.Cid], i, f, transferResponse.Roundtriptoken, cancellationToken });
                 }
             }
 
-            Console.WriteLine(_countdown.InitialCount);
-            Console.WriteLine(_countdown.CurrentCount);
             _countdown.Wait();
             foreach (var f in transferResponse.Files)
             {
@@ -306,7 +316,11 @@ public class FileSenderServer
             long offset = (long)parameters[1];
             TransferFile f = (TransferFile)parameters[2];
             string roundtriptoken = (string)parameters[3];
-
+            CancellationToken cancellationToken = (CancellationToken)parameters[4];
+            /*if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }*/
             var f_content = new byte[config.ChunkSize];
 
             lock (fileStream)
@@ -330,7 +344,8 @@ public class FileSenderServer
                 },
                 null,
                 f_content,
-                new Dictionary<string, string> { { "Content-Type", "application/octet-stream" } });
+                new Dictionary<string, string> { { "Content-Type", "application/octet-stream" } },
+                cancellationToken);
             t.EnsureSuccessStatusCode();
         }
         finally

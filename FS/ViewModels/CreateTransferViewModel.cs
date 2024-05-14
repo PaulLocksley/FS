@@ -1,5 +1,6 @@
 ﻿
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using FS.Models;
 
 namespace FS.ViewModels;
@@ -25,6 +26,8 @@ public partial class CreateTransferViewModel : ObservableObject
     [ObservableProperty] 
     private long totalFileSize;
 
+    [ObservableProperty] private bool transferActive = false;
+
     [ObservableProperty]
     private IDictionary<string, Guid> fileListIndex = new Dictionary<string, Guid>();
 
@@ -37,7 +40,12 @@ public partial class CreateTransferViewModel : ObservableObject
         Subject = "";
         Description = "";
     }
-    
+
+    [RelayCommand]
+    private void CancelTransfer()
+    {
+        TransferCancellationToken.Cancel();
+    }
     public async Task SendTransfer(string recipient2, string subject2, string description2,CancellationToken cancellationToken)
     {
 

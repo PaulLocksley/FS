@@ -77,7 +77,8 @@
                     Clicked="SendFiles"
                     HorizontalOptions="Fill" 
                     Margin="0,0,0,100"/>
-                
+                <Button Text="Cancel" Command="{x:Binding CancelTransferCommand}"></Button>
+
 
             </VerticalStackLayout>
         </ScrollView>
