@@ -42,14 +42,15 @@ public partial class CreateTransferViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void CancelTransfer()
+    public void CancelTransfer()
     {
         TransferCancellationToken.Cancel();
     }
     public async Task SendTransfer(string recipient2, string subject2, string description2,CancellationToken cancellationToken)
     {
 
-        
+        TransferActive = true;
+
         activeTransfer = await FSServer.CreateTransfer(new string[] { recipient2 },
             subject2,
             description2,
@@ -57,6 +58,7 @@ public partial class CreateTransferViewModel : ObservableObject
 
         var cidDictionary = SelectedFiles.ToDictionary(x => x.Value.fileID, x => x.Value.FileStream);
         await FSServer.SendTransfer(cidDictionary,activeTransfer,cancellationToken);
+        TransferActive = false;
         return;
     }
 

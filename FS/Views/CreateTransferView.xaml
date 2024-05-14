@@ -12,6 +12,9 @@
         <Style x:Key="ValidEntryStyle" TargetType="Entry">
             <Setter Property="TextColor" Value="Green" />
         </Style>
+        <ResourceDictionary>
+            <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
     </ContentPage.Resources>
     <ContentPage.Content>
         <ScrollView>
@@ -76,8 +79,15 @@
                     SemanticProperties.Hint="Send the selected files"
                     Clicked="SendFiles"
                     HorizontalOptions="Fill" 
-                    Margin="0,0,0,100"/>
-                <Button Text="Cancel" Command="{x:Binding CancelTransferCommand}"></Button>
+                    Margin="0,0,0,100"
+                    IsVisible="{x:Binding TransferActive, Converter={StaticResource InvertedBoolConverter}}"
+                    />
+                <Button Text="Cancel" 
+                        Clicked="CancelTransfer"
+                        IsVisible="{x:Binding TransferActive}"
+                        BorderColor="Firebrick"
+                        BorderWidth="5"
+                        ></Button>
 
 
             </VerticalStackLayout>

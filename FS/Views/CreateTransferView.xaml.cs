@@ -156,6 +156,15 @@ public partial class CreateTransferView : ContentPage
         var view = FileContainer.Children.First(x => x.AutomationId == viewID.ToString());
         MainThread.BeginInvokeOnMainThread(() => {  FileContainer.Remove(view); });
     }
+    private async void CancelTransfer(object? sender, EventArgs eventArgs)
+    {
+        bool cancelCheck = await DisplayAlert("Confirm", "Would you like to cancel your transfer", "Yes", "No");
+        if (!cancelCheck)
+        {
+            return;
+        }
+        viewModel.CancelTransfer();
+    }
 
     private async void SendFiles(object? sender, EventArgs eventArgs)
     {
@@ -174,7 +183,6 @@ public partial class CreateTransferView : ContentPage
         }
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            SendFilesBtn.Text = "Complete";
             SelectFilesBtn.Text = "Select Files";
             viewModel.SelectedFiles =
                 new Dictionary<string, (String MimeType, Task<Stream> FileStream, String FullPath, String FileName, long
