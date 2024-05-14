@@ -4,16 +4,22 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="FS.Views.TransfersView">
     <ContentPage.Content>
-        <ScrollView VerticalOptions="Fill">
-        <VerticalStackLayout Margin="20" VerticalOptions="Fill" >
-            <ListView ItemsSource="{Binding Transfers}"
+        <Grid Margin="20" VerticalOptions="Fill" BackgroundColor="Aquamarine">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="20" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>     
+            <ListView Grid.Row="1"
+                      ItemsSource="{Binding Transfers}"
                       ItemTapped="InspectTransfer" 
                       HasUnevenRows="true" 
                       IsRefreshing="{Binding IsRefreshing}"
-                      RefreshCommand="{Binding RefreshData}"
+                      RefreshCommand="{Binding RefreshDataCommand}"
                       IsPullToRefreshEnabled="True"
-                      x:Name="TransferListView"
-                      >
+                      x:Name="TransferListView" >
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
@@ -45,8 +51,6 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-            <Label Text="" Margin="0,30"></Label>
-        </VerticalStackLayout>
-        </ScrollView>
+        </Grid>
     </ContentPage.Content>
 </ContentPage>
