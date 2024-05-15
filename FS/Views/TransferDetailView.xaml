@@ -3,5 +3,59 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="FS.Views.TransferDetailView">
- 
+<Grid Margin="20" VerticalOptions="Fill" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="75" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="10" />
+
+            </Grid.ColumnDefinitions>     
+    
+            <Label Grid.Column="1" Grid.Row="1" Text="{Binding Transfer.Subject}" Padding="5,0"></Label>
+            <Label Grid.Column="1" Grid.Row="2" Text="{Binding Transfer.ViewRecipients}" Padding="5,0"></Label>
+            <Button Grid.Column="2" Grid.Row="1" Grid.RowSpan="2" Text="Logs"></Button>
+
+            <ListView Grid.Column="1" Grid.Row="4" Grid.ColumnSpan="2"
+                      ItemsSource="{Binding Transfer.Files}"
+                      HasUnevenRows="true" 
+                      x:Name="FileListView" >
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <Grid Padding="0,10"  >
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="30" />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding Name}" FontSize="20" HorizontalOptions="Start" Padding="5,2"></Label>
+
+                            <Label Grid.Row="1" Grid.Column="0" Text="{Binding HumanSize}" Padding="5,2"></Label>
+                            <Image Grid.Row="0" 
+                                   Grid.Column="1" 
+                                   Grid.RowSpan="2"
+                                   Source="download.png"
+                                   VerticalOptions="Center" 
+                                   HorizontalOptions="End" 
+                                   Margin="0,0,5,0"></Image>
+                        </Grid>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        <Button Grid.Column="1" Grid.Row="5" Grid.ColumnSpan="2" HeightRequest="50" Text="Download All"></Button>
+        </Grid>
 </ContentPage>

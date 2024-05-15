@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using FS.Utilities;
 
 namespace FS.Models;
 
@@ -76,6 +77,8 @@ namespace FS.Models;
      [JsonConverter(typeof(CustomLongConverter))]
 
      public long Size { get; set; }
+
+     public string HumanSize => FileSize.getHumanFileSize(Size);
 
      [JsonPropertyName("cid")]
      public String? Cid { get; set; }

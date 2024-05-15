@@ -4,7 +4,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="FS.Views.TransfersView">
     <ContentPage.Content>
-        <Grid Margin="20" VerticalOptions="Fill" BackgroundColor="Aquamarine">
+        <Grid Margin="20" VerticalOptions="Fill" >
             <Grid.RowDefinitions>
                 <RowDefinition Height="20" />
                 <RowDefinition Height="*" />
