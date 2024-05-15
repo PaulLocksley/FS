@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Markup;
+using CommunityToolkit.Maui.Storage;
 using Microsoft.Extensions.Logging;
 
 namespace FS;
@@ -10,7 +11,7 @@ public static class MauiProgram
     {
         var builder = MauiApp.CreateBuilder();
         builder.UseMauiApp<App>().UseMauiCommunityToolkitMarkup();
-
+        builder.Services.AddSingleton<IFileSaver>(FileSaver.Default);
         builder
             .UseMauiApp<App>()
             .UseMauiCommunityToolkit()

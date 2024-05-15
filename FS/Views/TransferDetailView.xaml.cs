@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Storage;
 using FS.Models;
-using FS.Utilities;
 using FS.ViewModels;
 
 namespace FS.Views;
@@ -12,43 +9,34 @@ namespace FS.Views;
 public partial class TransferDetailView : ContentPage
 {
     private TransferDetailViewModel viewModel;
+    private readonly IFileSaver fileSaver;
     public TransferDetailView(Transfer transfer)
     {
+        
         InitializeComponent();
+        this.fileSaver = FileSaver.Default;
         viewModel = new TransferDetailViewModel(transfer);
         BindingContext = viewModel;
         Title = transfer.Subject ?? string.Empty;
 
-        /*var downloadUrl = transfer.Recipients.First().DownloadUrl.ToString();
-        var vstack = new VerticalStackLayout();
-        var scrollView = new ScrollView();
-        scrollView.Content = vstack;
-        
-        vstack.Children.Add(new Label
-        {
-            Text = transfer.ViewRecipients
-            
-        });
+    }
 
-        foreach (var file in transfer.Files)
-        {
-            vstack.Add(new HorizontalStackLayout
-            {
-                new Label
-                {
-                    Text = file.Name
-                },
-                new Label
-                {
-                    Text = FileSize.getHumanFileSize(file.Size),
-                    FontSize = 10
-                }
-            });
-        }
+    public async void SaveFile(object sender, EventArgs args)
+    {
+        var cancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = cancellationTokenSource.Token;
+        //from transfer
+        //https://fs.locksley.dev/filesender/?s=download&token=ad4ac5be-a8f3-472e-b32c-de83e2494504
         
+        //from page
+        //https://fs.locksley.dev/filesender/download.php?token=ad4ac5be-a8f3-472e-b32c-de83e2494504&files_ids=1977
+
+        var o = new HttpClient();
+        var stream = await o.GetStreamAsync(new Uri(
+            "https://fs.locksley.dev/filesender/download.php?token=ad4ac5be-a8f3-472e-b32c-de83e2494504&files_ids=1977"));
         
-        Content = scrollView;
-        */
-        
+        var fileSaverResult = await fileSaver.SaveAsync("test.pdf", stream, cancellationToken);
+        fileSaverResult.EnsureSuccess();
+        await Toast.Make($"File is saved: {fileSaverResult.FilePath}").Show(cancellationToken);
     }
 }
