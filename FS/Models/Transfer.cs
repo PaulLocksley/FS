@@ -39,7 +39,12 @@ namespace FS.Models;
 
      [JsonPropertyName("recipients")]
      public Recipient[] Recipients { get; set; }
-
+    
+     [JsonPropertyName("created")]
+     public FileSenderTime Created { get; set; }
+     
+     [JsonPropertyName("expires")]
+     public FileSenderTime Expiry { get; set; }
      public String ViewRecipients
      {
          get
@@ -82,6 +87,17 @@ namespace FS.Models;
 
      [JsonPropertyName("cid")]
      public String? Cid { get; set; }
+ }
+
+ public partial class FileSenderTime 
+ {
+     [JsonPropertyName("raw")]
+     [JsonConverter(typeof(CustomLongConverter))]
+     public long? UnixTime { get; set; }
+     
+     [JsonPropertyName("formatted")]
+     public string? FormatedDate { get; set; }
+
  }
 
  public partial class Recipient

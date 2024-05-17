@@ -60,7 +60,6 @@ public partial class LoginView : ContentPage
 
         });
         YoinkConfigFromWebView(null,null);
-        Debug.WriteLine("AAAATest");
     }
     
     private void OnPageAppearing(object sender, EventArgs e)
