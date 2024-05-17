@@ -12,12 +12,12 @@ public partial class TransferDetailView : ContentPage
 {
     private TransferDetailViewModel viewModel;
     private readonly IFileSaver fileSaver;
-    public TransferDetailView(Transfer transfer)
+    public TransferDetailView(Transfer transfer, FileSenderServer FSServer)
     {
         
         InitializeComponent();
         this.fileSaver = FileSaver.Default;
-        viewModel = new TransferDetailViewModel(transfer);
+        viewModel = new TransferDetailViewModel(transfer,FSServer);
         BindingContext = viewModel;
         Title = transfer.Subject ?? string.Empty;
 
@@ -40,7 +40,6 @@ public partial class TransferDetailView : ContentPage
             var downloadClient = new HttpClient();
             var stream = await downloadClient.GetStreamAsync(new Uri(
                 downloadUrl));
-
             var fileSaverResult = await fileSaver.SaveAsync(file.Name, stream);
             fileSaverResult.EnsureSuccess();
             await Toast.Make($"File is saved: {fileSaverResult.FilePath}").Show();
@@ -57,6 +56,12 @@ public partial class TransferDetailView : ContentPage
         //todo: confirm zip settings on server before implementation.
         await Toast.Make($"Not implemented.").Show();
 
+    }
+    
+    public async void ShowAuditLog(object sender, EventArgs args)
+    {
+        var auditLog = await viewModel.FsServer.getAuditLog(viewModel.Transfer.Id);
+        Navigation.PushAsync(new AuditLogView(auditLog));
     }
     
 }

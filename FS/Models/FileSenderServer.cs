@@ -302,6 +302,20 @@ public class FileSenderServer
         return transfers;
     }
 
+    public async Task<AuditLogEvent[]> getAuditLog(int transferId)
+    {
+        var logRequest = await Call(HttpVerb.Get,$"/transfer/{transferId}/auditlog",
+            new Dictionary<string, string>(), null, null,
+            new Dictionary<string, string>());
+        var responseText = await logRequest.Content.ReadAsStringAsync();
+        var transfers = JsonSerializer.Deserialize<AuditLogEvent[]>(responseText);
+        if (transfers is null)
+        {
+            return new AuditLogEvent[] { };
+        }
+        return transfers;
+    }
+    
     public static string CleanFileName(string name)
     {
         return Regex.Replace(name,@"[^ \/\p{L}\p{N}_\.,;:!@#$%^&*)(\]\[_-]+","");
@@ -357,7 +371,7 @@ public class FileSenderServer
         }
     }
 
-
+    
 
     public Double getProgressPercent()
     {

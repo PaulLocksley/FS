@@ -34,7 +34,7 @@ public partial class TransfersView : ContentPage
         var transfer = ((ListView)sender).SelectedItem as Transfer;
         if (transfer is not null)
         {
-            var page = new TransferDetailView(transfer);
+            var page = new TransferDetailView(transfer,viewModel.FSServer);
             Debug.WriteLine(Navigation.NavigationStack.Count);
             await Navigation.PushAsync(page);
             //await Navigation.PushAsync(page);
