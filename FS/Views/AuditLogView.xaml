@@ -14,8 +14,7 @@
                 <ColumnDefinition Width="*" />
 
             </Grid.ColumnDefinitions>
-            <Label Text="AuditLog"/>
-
+            <Label Text="Audit Log" Style="{StaticResource Headline}"/>
             <ListView Grid.Column="0" Grid.Row="1"
                       ItemsSource="{Binding AuditLogs}"
                       HasUnevenRows="true"
@@ -24,20 +23,29 @@
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
-                            <Grid Padding="0,10"  >
+                            <Grid Padding="10,10"  >
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="30" />
+
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                
                                 <Label Grid.Row="0" Grid.Column="0"
+                                       Text="{Binding Date.FormatedDate}"
+                                       FontSize="20"
+                                />
+                                <Label Grid.Row="0" Grid.Column="1"
                                        Text="{Binding Event}"
                                        FontSize="20"
                                        />
+                                <Label Grid.Row="0" Grid.Column="2"
+                                       Text="{Binding Author.Identity}"
+                                       FontSize="20"
+                                />
                             </Grid>
                         </ViewCell>
                     </DataTemplate>

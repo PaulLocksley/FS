@@ -22,7 +22,7 @@ namespace FS.Models
     public partial class AuditLogEvent
     {
         [JsonPropertyName("date")]
-        public Date Date { get; set; }
+        public FileSenderTime Date { get; set; }
 
         [JsonPropertyName("event")]
         public string Event { get; set; }
@@ -34,7 +34,7 @@ namespace FS.Models
         public Target Target { get; set; }
 
         [JsonPropertyName("time_taken")]
-        public Date TimeTaken { get; set; }
+        public FileSenderTime TimeTaken { get; set; }
     }
 
     public partial class Author
@@ -52,16 +52,7 @@ namespace FS.Models
         [JsonPropertyName("ip")]
         public string Ip { get; set; }
     }
-
-    public partial class Date
-    {
-        [JsonPropertyName("raw")]
-        public long? Raw { get; set; }
-
-        [JsonPropertyName("formatted")]
-        public string Formatted { get; set; }
-    }
-
+    
     public partial class Target
     {
         [JsonPropertyName("type")]
