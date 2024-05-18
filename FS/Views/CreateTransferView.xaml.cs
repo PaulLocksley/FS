@@ -153,6 +153,7 @@ public partial class CreateTransferView : ContentPage
         viewModel.FileListIndex.Remove(key);
         var view = FileContainer.Children.First(x => x.AutomationId == viewID.ToString());
         MainThread.BeginInvokeOnMainThread(() => {  FileContainer.Remove(view); });
+        viewModel.ValidateTransfer();
     }
     private async void CancelTransfer(object? sender, EventArgs eventArgs)
     {
@@ -167,7 +168,7 @@ public partial class CreateTransferView : ContentPage
     private async void SendFiles(object? sender, EventArgs eventArgs)
     {
         viewModel.TransferCancellationToken = new CancellationTokenSource();
-        var trans = viewModel.SendTransfer(EmailInput.Text,SubjectInput.Text,DescriptionInput.Text,viewModel.TransferCancellationToken.Token);
+        var trans = viewModel.SendTransfer(viewModel.TransferCancellationToken.Token);
         MainThread.BeginInvokeOnMainThread(() => {SendFilesBtn.Text = "Sending";});
         while (!trans.IsCompleted)
         {
@@ -190,5 +191,10 @@ public partial class CreateTransferView : ContentPage
         var toast = Toast.Make(toastText);
         toast.Show();
         UpdateFileList();
+    }
+
+    private void ValidateTranfer(object? sender, TextChangedEventArgs e)
+    {
+        viewModel.ValidateTransfer();
     }
 }

@@ -1,6 +1,6 @@
 ﻿
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FS.Models;
@@ -12,10 +12,10 @@ public partial class CreateTransferViewModel : ObservableObject
 
     public HashSet<CreateTransferFile> SelectedFiles;
 
-    
+
     [ObservableProperty]
     private string recipient;
-    
+
     [ObservableProperty]
     private string subject;
 
@@ -31,6 +31,9 @@ public partial class CreateTransferViewModel : ObservableObject
     [ObservableProperty]
     private IDictionary<string, Guid> fileListIndex = new Dictionary<string, Guid>();
 
+    [ObservableProperty]
+    private bool isValidTransferState;
+    
     private Transfer? activeTransfer;
     public CancellationTokenSource TransferCancellationToken = new CancellationTokenSource();
     public CreateTransferViewModel(FileSenderServer fsServer)
@@ -41,7 +44,10 @@ public partial class CreateTransferViewModel : ObservableObject
         Description = "";
         TransferActive = false;
         SelectedFiles = [];
+        IsValidTransferState = false;
     }
+
+
 
     [RelayCommand]
     public void CancelTransfer()
@@ -52,16 +58,16 @@ public partial class CreateTransferViewModel : ObservableObject
     public void AddFile(CreateTransferFile file)
     {
         SelectedFiles.Add(file);
+        ValidateTransfer();
     }
     
-    public async Task SendTransfer(string recipient2, string subject2, string description2,CancellationToken cancellationToken)
+    public async Task SendTransfer(CancellationToken cancellationToken)
     {
-
         TransferActive = true;
 
-        activeTransfer = await FsServer.CreateTransfer(new string[] { recipient2 },
-            subject2,
-            description2,
+        activeTransfer = await FsServer.CreateTransfer(Recipient.Replace(',',' ').Split(" "),
+            Subject,
+            Description,
             SelectedFiles.ToArray());
 
         var cidDictionary = SelectedFiles.ToDictionary(x => x.FileId, x => x.FileStream);
@@ -69,10 +75,17 @@ public partial class CreateTransferViewModel : ObservableObject
         TransferActive = false;
         return;
     }
-
-    public bool IsValidTransferState()
-    {
-        return true;
-    }
     
+    [RelayCommand]
+    public void ValidateTransfer()
+    {
+        IsValidTransferState = SelectedFiles.Count > 0 && ValidateRecipientFiled();
+        return;
+    }
+
+    private EmailAddressAttribute emailTool =  new EmailAddressAttribute();
+    private bool ValidateRecipientFiled()
+    {
+        return Recipient.Replace(',',' ').Split(" ").All(x => emailTool.IsValid(x));
+    }
 }

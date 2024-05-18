@@ -31,7 +31,7 @@
 
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="{OnIdiom  200, Phone=130}" />
+                <ColumnDefinition Width="{OnIdiom  220, Phone=130}" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>     
             <Image Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
@@ -39,64 +39,60 @@
                 HeightRequest="185"
                 Aspect="AspectFit"
                 SemanticProperties.Description="AstroMan" />
-                <Label Grid.Row="1" Grid.Column="0" Text="Recipient Email:"
-                       Padding="10,0"
-                       Style="{StaticResource SubHeadline}"></Label>
-                <Entry Grid.Row="1" Grid.Column="1"  x:Name="EmailInput"
-                       HorizontalOptions="Fill">
-                <Entry.Behaviors>
-                    <toolkit:EmailValidationBehavior 
-                        InvalidStyle="{StaticResource InvalidEntryStyle}"
-                        ValidStyle="{StaticResource ValidEntryStyle}"
-                        Flags="ValidateOnValueChanged" />
-                </Entry.Behaviors>
+            <Label Grid.Row="1" Grid.Column="0" Text="Recipient Email/s:"
+                   Padding="10,0"
+                   Style="{StaticResource SubHeadline}"></Label>
+            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Recipient}"
+                   HorizontalOptions="Fill"
+                   TextChanged="ValidateTranfer">
             </Entry>
-                <Label Grid.Row="2" Grid.Column="0"  Text="Subject:"
-                       Padding="10,0"
-                       Style="{StaticResource SubHeadline}"
-                />
-                <Entry Grid.Row="2" Grid.Column="1"
-                       x:Name="SubjectInput"
-                       HorizontalOptions="Fill"
-                />
+            <Label Grid.Row="2" Grid.Column="0"  Text="Subject:"
+                   Padding="10,0"
+                   Style="{StaticResource SubHeadline}"
+            />
+            <Entry Grid.Row="2" Grid.Column="1"
+                   Text="{Binding Subject}"
+                   HorizontalOptions="Fill"
+            />
 
-                <Label Grid.Row="3" Grid.Column="0"  Text="Message:" 
-                       Padding="10,0"
-                       Style="{StaticResource SubHeadline}"> </Label>
-                <Editor Grid.Row="3" Grid.Column="1"  x:Name="DescriptionInput"
-                        HorizontalOptions="Fill"
-                        VerticalOptions="Fill"
-                        />
-                
-                <ScrollView Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2">
-                    <VerticalStackLayout  x:Name="FileContainer">
-                        <Label Text="TEST"></Label>
-                    </VerticalStackLayout>
-                </ScrollView>
-
-                
-                <VerticalStackLayout Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2">
-                    <Label x:Name="CounterCount"></Label>
-                    <ProgressBar Progress="0.0"
-                                 ProgressColor="Orange" 
-                                 x:Name="CounterProgress"/>
+            <Label Grid.Row="3" Grid.Column="0"  Text="Message:" 
+                   Padding="10,0"
+                   Style="{StaticResource SubHeadline}"> </Label>
+            <Editor Grid.Row="3" Grid.Column="1"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill"
+                    Text="{Binding Description}"
+                    />
+            
+            <ScrollView Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2">
+                <VerticalStackLayout  x:Name="FileContainer">
                 </VerticalStackLayout>
-                <Button Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
-                        x:Name="SelectFilesBtn"
-                        Text="Select Files" 
-                        SemanticProperties.Hint="Select Files to Include in Transfer"
-                        Clicked="SelectFiles"
-                        HorizontalOptions="Fill" />
+            </ScrollView>
+
+            
+            <VerticalStackLayout Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2">
+                <Label x:Name="CounterCount"></Label>
+                <ProgressBar Progress="0.0"
+                             ProgressColor="Orange" 
+                             x:Name="CounterProgress"/>
+            </VerticalStackLayout>
+            <Button Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
+                    x:Name="SelectFilesBtn"
+                    Text="Add Files" 
+                    SemanticProperties.Hint="Select Files to Include in Transfer"
+                    Clicked="SelectFiles"
+                    HorizontalOptions="Fill" />
             <Label Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding TransferActive}"></Label>
 
                 <Button Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
                         x:Name="SendFilesBtn"
-                        Text="Send Files" 
+                        Text="Send Transfer" 
                         SemanticProperties.Hint="Send the selected files"
                         Clicked="SendFiles"
                         HorizontalOptions="Fill" 
                         IsVisible="{Binding TransferActive, 
                                     Converter={StaticResource InvertedBoolConverter}}"
+                        IsEnabled="{Binding IsValidTransferState}"
                 />
                 <Button  Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Text="Cancel" 
                          Clicked="CancelTransfer"
