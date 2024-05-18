@@ -25,7 +25,7 @@
                 <RowDefinition Height="45" />
                 <RowDefinition Height="100" />
                 <RowDefinition Height="*" /><!-- ** file container -->
-                <RowDefinition Height="20" />
+                <RowDefinition Height="30" />
                 <RowDefinition Height="50" />
                 <RowDefinition Height="50" />
 
