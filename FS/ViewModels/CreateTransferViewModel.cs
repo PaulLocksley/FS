@@ -1,4 +1,6 @@
 ﻿
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FS.Models;
@@ -6,17 +8,14 @@ using FS.Models;
 namespace FS.ViewModels;
 public partial class CreateTransferViewModel : ObservableObject
 {
-    public FileSenderServer FSServer;
+    public FileSenderServer FsServer;
 
-    [ObservableProperty]
-    private IDictionary<string, (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize, string fileID)> selectedFiles = 
-        new Dictionary<string,  (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize, string fileID)>();
+    public HashSet<CreateTransferFile> SelectedFiles;
 
-    
-    
+
     [ObservableProperty]
     private string recipient;
-    
+
     [ObservableProperty]
     private string subject;
 
@@ -26,45 +25,67 @@ public partial class CreateTransferViewModel : ObservableObject
     [ObservableProperty] 
     private long totalFileSize;
 
-    [ObservableProperty] private bool transferActive = false;
+    [ObservableProperty]
+    private bool transferActive;
 
     [ObservableProperty]
     private IDictionary<string, Guid> fileListIndex = new Dictionary<string, Guid>();
 
+    [ObservableProperty]
+    private bool isValidTransferState;
+    
     private Transfer? activeTransfer;
     public CancellationTokenSource TransferCancellationToken = new CancellationTokenSource();
     public CreateTransferViewModel(FileSenderServer fsServer)
     {
-        FSServer = fsServer;
+        FsServer = fsServer;
         Recipient = "";
         Subject = "";
         Description = "";
+        TransferActive = false;
+        SelectedFiles = [];
+        IsValidTransferState = false;
     }
+
+
 
     [RelayCommand]
     public void CancelTransfer()
     {
         TransferCancellationToken.Cancel();
     }
-    public async Task SendTransfer(string recipient2, string subject2, string description2,CancellationToken cancellationToken)
-    {
 
+    public void AddFile(CreateTransferFile file)
+    {
+        SelectedFiles.Add(file);
+        ValidateTransfer();
+    }
+    
+    public async Task SendTransfer(CancellationToken cancellationToken)
+    {
         TransferActive = true;
 
-        activeTransfer = await FSServer.CreateTransfer(new string[] { recipient2 },
-            subject2,
-            description2,
-            SelectedFiles.Select(x => x.Value).ToArray());
+        activeTransfer = await FsServer.CreateTransfer(Recipient.Replace(',',' ').Split(" "),
+            Subject,
+            Description,
+            SelectedFiles.ToArray());
 
-        var cidDictionary = SelectedFiles.ToDictionary(x => x.Value.fileID, x => x.Value.FileStream);
-        await FSServer.SendTransfer(cidDictionary,activeTransfer,cancellationToken);
+        var cidDictionary = SelectedFiles.ToDictionary(x => x.FileId, x => x.FileStream);
+        await FsServer.SendTransfer(cidDictionary,activeTransfer,cancellationToken);
         TransferActive = false;
         return;
     }
-
-    public bool IsValidTransferState()
-    {
-        return true;
-    }
     
+    [RelayCommand]
+    public void ValidateTransfer()
+    {
+        IsValidTransferState = SelectedFiles.Count > 0 && ValidateRecipientFiled();
+        return;
+    }
+
+    private EmailAddressAttribute emailTool =  new EmailAddressAttribute();
+    private bool ValidateRecipientFiled()
+    {
+        return Recipient.Replace(',',' ').Split(" ").All(x => emailTool.IsValid(x));
+    }
 }

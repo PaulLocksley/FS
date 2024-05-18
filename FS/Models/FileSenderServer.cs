@@ -156,7 +156,7 @@ public class FileSenderServer
     }
 
     public async Task<Transfer> CreateTransfer(string[] recepients, string subject, string message,
-        (String MimeType, Task<Stream> FileStream, String FullPath, String FileName, long FileSize, string fileID)[] files)
+        CreateTransferFile[] files)
     {
         
         Debug.WriteLine($"starting test transfer");
@@ -178,7 +178,7 @@ public class FileSenderServer
             tmpFile["size"] = f_info.FileSize.ToString();
             tmpFile["mime_type"] = f_info.MimeType;
 
-            tmpFile["cid"] = f_info.fileID;
+            tmpFile["cid"] = f_info.FileId;
             filesObject.Add(tmpFile);
         }
 

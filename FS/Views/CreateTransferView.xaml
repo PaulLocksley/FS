@@ -17,80 +17,89 @@
         </ResourceDictionary>
     </ContentPage.Resources>
     <ContentPage.Content>
-        <ScrollView>
-            <VerticalStackLayout
-                Padding="30,0"
-                Spacing="25">
-                <Image
-                    Source="astroman.png"
-                    HeightRequest="185"
-                    Aspect="AspectFit"
-                    SemanticProperties.Description="AstroMan" />
-                <HorizontalStackLayout HorizontalOptions="Fill">
-                    <Label Text="Recipient Email:"
-                           Padding="10,0"
-                           Style="{StaticResource SubHeadline}"></Label>
-                    <Entry x:Name="EmailInput"
-                           HorizontalOptions="Fill"
-                           WidthRequest="400">
-                    <Entry.Behaviors>
-                        <toolkit:EmailValidationBehavior 
-                            InvalidStyle="{StaticResource InvalidEntryStyle}"
-                            ValidStyle="{StaticResource ValidEntryStyle}"
-                            Flags="ValidateOnValueChanged" />
-                    </Entry.Behaviors>
-                </Entry>
-                </HorizontalStackLayout>
-                <HorizontalStackLayout>
-                    <Label Text="Subject:"
-                           Padding="10,0"
-                           Style="{StaticResource SubHeadline}"
-                           ></Label>
-                    <Entry x:Name="SubjectInput"
-                           WidthRequest="400"
-                           ></Entry>
-                </HorizontalStackLayout>
+        <!-- margin l,t,r,b -->
+        <Grid Padding="{OnIdiom  '20,0,20,100', Phone='10,0,10,50'}" RowSpacing="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="185" /> 
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="45" />
+                <RowDefinition Height="100" />
+                <RowDefinition Height="*" /><!-- ** file container -->
+                <RowDefinition Height="30" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="50" />
 
-                <HorizontalStackLayout>
-                    <Label Text="Message:" 
-                           Padding="10,0"
-                           Style="{StaticResource SubHeadline}"> </Label>
-                    <Editor x:Name="DescriptionInput"
-                           WidthRequest="400"
-                           HeightRequest="100"></Editor>
-                </HorizontalStackLayout>
-                    <VerticalStackLayout x:Name="FileContainer">
-                    </VerticalStackLayout>
-                <Button
-                    x:Name="SelectFilesBtn"
-                    Text="Select Files" 
-                    SemanticProperties.Hint="Select Files to Include in Transfer"
-                    Clicked="SelectFiles"
-                    HorizontalOptions="Fill" />
-                
-                
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{OnIdiom  220, Phone=130}" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>     
+            <Image Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                Source="astroman.png"
+                HeightRequest="185"
+                Aspect="AspectFit"
+                SemanticProperties.Description="AstroMan" />
+            <Label Grid.Row="1" Grid.Column="0" Text="Recipient Email/s:"
+                   Padding="10,0"
+                   Style="{StaticResource SubHeadline}"></Label>
+            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Recipient}"
+                   HorizontalOptions="Fill"
+                   TextChanged="ValidateTranfer">
+            </Entry>
+            <Label Grid.Row="2" Grid.Column="0"  Text="Subject:"
+                   Padding="10,0"
+                   Style="{StaticResource SubHeadline}"
+            />
+            <Entry Grid.Row="2" Grid.Column="1"
+                   Text="{Binding Subject}"
+                   HorizontalOptions="Fill"
+            />
+
+            <Label Grid.Row="3" Grid.Column="0"  Text="Message:" 
+                   Padding="10,0"
+                   Style="{StaticResource SubHeadline}"> </Label>
+            <Editor Grid.Row="3" Grid.Column="1"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill"
+                    Text="{Binding Description}"
+                    />
+            
+            <ScrollView Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2">
+                <VerticalStackLayout  x:Name="FileContainer">
+                </VerticalStackLayout>
+            </ScrollView>
+
+            
+            <VerticalStackLayout Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2">
                 <Label x:Name="CounterCount"></Label>
                 <ProgressBar Progress="0.0"
                              ProgressColor="Orange" 
                              x:Name="CounterProgress"/>
-                <Button
-                    x:Name="SendFilesBtn"
-                    Text="Send Files" 
-                    SemanticProperties.Hint="Send the selected files"
-                    Clicked="SendFiles"
-                    HorizontalOptions="Fill" 
-                    Margin="0,0,0,100"
-                    IsVisible="{x:Binding TransferActive, Converter={StaticResource InvertedBoolConverter}}"
-                    />
-                <Button Text="Cancel" 
-                        Clicked="CancelTransfer"
-                        IsVisible="{x:Binding TransferActive}"
-                        BorderColor="Firebrick"
-                        BorderWidth="5"
-                        ></Button>
-
-
             </VerticalStackLayout>
-        </ScrollView>
+            <Button Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
+                    x:Name="SelectFilesBtn"
+                    Text="Add Files" 
+                    SemanticProperties.Hint="Select Files to Include in Transfer"
+                    Clicked="SelectFiles"
+                    HorizontalOptions="Fill" />
+            <Label Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding TransferActive}"></Label>
+
+                <Button Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
+                        x:Name="SendFilesBtn"
+                        Text="Send Transfer" 
+                        SemanticProperties.Hint="Send the selected files"
+                        Clicked="SendFiles"
+                        HorizontalOptions="Fill" 
+                        IsVisible="{Binding TransferActive, 
+                                    Converter={StaticResource InvertedBoolConverter}}"
+                        IsEnabled="{Binding IsValidTransferState}"
+                />
+                <Button  Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Text="Cancel" 
+                         Clicked="CancelTransfer"
+                         IsVisible="{Binding TransferActive}"
+                         BorderColor="Firebrick"
+                         BorderWidth="5"
+                ></Button>
+        </Grid>
     </ContentPage.Content>
 </ContentPage>
