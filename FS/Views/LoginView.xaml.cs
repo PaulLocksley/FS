@@ -23,9 +23,12 @@ public partial class LoginView : ContentPage
             //b.Command = viewModel.testtttttCommand;
             serverList.Add(b);
         }
-
+        serverList.Spacing = 10;
         var welcomeBanner = new Label();
         welcomeBanner.Text = "Select your server";
+        welcomeBanner.HorizontalOptions = LayoutOptions.Center;
+        welcomeBanner.FontSize = 30;
+        welcomeBanner.FontAttributes = FontAttributes.Bold;
         LoginViewStack.Children.Add(welcomeBanner);
         LoginViewStack.Children.Add(serverList);
         Content = new Grid
