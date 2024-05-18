@@ -17,16 +17,18 @@
         </ResourceDictionary>
     </ContentPage.Resources>
     <ContentPage.Content>
-        <Grid Padding="30,0" RowSpacing="10">
+        <!-- margin l,t,r,b -->
+        <Grid Padding="{OnIdiom  '20,0,20,100', Phone='20,0,20,80'}" RowSpacing="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="185" /> 
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="45" />
                 <RowDefinition Height="100" />
-                <RowDefinition Height="300" /><!-- ** file container -->
+                <RowDefinition Height="*" /><!-- ** file container -->
                 <RowDefinition Height="20" />
                 <RowDefinition Height="50" />
                 <RowDefinition Height="50" />
+
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="{OnIdiom  200, Phone=130}" />
