@@ -82,20 +82,20 @@
                         SemanticProperties.Hint="Select Files to Include in Transfer"
                         Clicked="SelectFiles"
                         HorizontalOptions="Fill" />
-                
-                <Label Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Text="Here"></Label>
+            <Label Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding TransferActive}"></Label>
+
                 <Button Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2"
                         x:Name="SendFilesBtn"
                         Text="Send Files" 
                         SemanticProperties.Hint="Send the selected files"
                         Clicked="SendFiles"
                         HorizontalOptions="Fill" 
-                        Margin="0,0,0,100"
-                        IsVisible="{x:Binding TransferActive, Converter={StaticResource InvertedBoolConverter}}"
+                        IsVisible="{Binding TransferActive, 
+                                    Converter={StaticResource InvertedBoolConverter}}"
                 />
                 <Button  Grid.Row="7" Grid.Column="0" Grid.ColumnSpan="2" Text="Cancel" 
                          Clicked="CancelTransfer"
-                         IsVisible="{x:Binding TransferActive}"
+                         IsVisible="{Binding TransferActive}"
                          BorderColor="Firebrick"
                          BorderWidth="5"
                 ></Button>
