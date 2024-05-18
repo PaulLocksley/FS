@@ -44,6 +44,7 @@
                    Style="{StaticResource SubHeadline}"></Label>
             <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Recipient}"
                    HorizontalOptions="Fill"
+                   Keyboard="Email"
                    TextChanged="ValidateTranfer">
             </Entry>
             <Label Grid.Row="2" Grid.Column="0"  Text="Subject:"
