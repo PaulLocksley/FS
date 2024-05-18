@@ -24,8 +24,6 @@ public partial class CreateTransferView : ContentPage
         Title = "Create Transfer";
         viewModel = new CreateTransferViewModel(fsServer);
         BindingContext = viewModel;
-
-        
     }
 
     private void SelectFiles(object sender, EventArgs e)
@@ -51,14 +49,14 @@ public partial class CreateTransferView : ContentPage
                     continue;
                 }
 
-                if (viewModel.FSServer.config.BannedFileTypes.Contains(fresult.FileName.Split('.').Last()))
+                if (viewModel.FsServer.config.BannedFileTypes.Contains(fresult.FileName.Split('.').Last()))
                 {
                     var toast = Toast.Make($"File {fresult.FileName} ignored, reason: banned Filetype.");
                     await toast.Show();
                     continue;
                 }
                 
-                if ( viewModel.TotalFileSize + file_task.Result.Length > viewModel.FSServer.config.MaxTransferSize)
+                if ( viewModel.TotalFileSize + file_task.Result.Length > viewModel.FsServer.config.MaxTransferSize)
                 {
                     var toast = Toast.Make($"File {fresult.FileName} ignored, reason: Transfer over max file size.");
                     await toast.Show();
@@ -66,7 +64,7 @@ public partial class CreateTransferView : ContentPage
                 }
                 viewModel.TotalFileSize += file_task.Result.Length;
 
-                if (viewModel.SelectedFiles.Count + 1 > viewModel.FSServer.config.MaxFilesCount)
+                if (viewModel.SelectedFiles.Count + 1 > viewModel.FsServer.config.MaxFilesCount)
                 {
                     var toast = Toast.Make($"File {fresult.FileName} ignored, reason: Transfer over max file count.");
                     await toast.Show();
@@ -175,8 +173,8 @@ public partial class CreateTransferView : ContentPage
         {
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                CounterCount.Text = viewModel.FSServer.getProgressPercent().ToString(CultureInfo.CurrentCulture);
-                CounterProgress.ProgressTo(viewModel.FSServer.getProgressPercent() ,
+                CounterCount.Text = viewModel.FsServer.getProgressPercent().ToString(CultureInfo.CurrentCulture);
+                CounterProgress.ProgressTo(viewModel.FsServer.getProgressPercent() ,
                     100, Easing.Linear);
             });
             await Task.Delay(100);

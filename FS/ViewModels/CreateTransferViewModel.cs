@@ -6,7 +6,7 @@ using FS.Models;
 namespace FS.ViewModels;
 public partial class CreateTransferViewModel : ObservableObject
 {
-    public FileSenderServer FSServer;
+    public FileSenderServer FsServer;
 
     [ObservableProperty]
     private IDictionary<string, (String MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize, string fileID)> selectedFiles = 
@@ -26,7 +26,8 @@ public partial class CreateTransferViewModel : ObservableObject
     [ObservableProperty] 
     private long totalFileSize;
 
-    [ObservableProperty] private bool transferActive = false;
+    [ObservableProperty]
+    private bool transferActive;
 
     [ObservableProperty]
     private IDictionary<string, Guid> fileListIndex = new Dictionary<string, Guid>();
@@ -35,10 +36,11 @@ public partial class CreateTransferViewModel : ObservableObject
     public CancellationTokenSource TransferCancellationToken = new CancellationTokenSource();
     public CreateTransferViewModel(FileSenderServer fsServer)
     {
-        FSServer = fsServer;
+        FsServer = fsServer;
         Recipient = "";
         Subject = "";
         Description = "";
+        TransferActive = false;
     }
 
     [RelayCommand]
@@ -51,13 +53,13 @@ public partial class CreateTransferViewModel : ObservableObject
 
         TransferActive = true;
 
-        activeTransfer = await FSServer.CreateTransfer(new string[] { recipient2 },
+        activeTransfer = await FsServer.CreateTransfer(new string[] { recipient2 },
             subject2,
             description2,
             SelectedFiles.Select(x => x.Value).ToArray());
 
         var cidDictionary = SelectedFiles.ToDictionary(x => x.Value.fileID, x => x.Value.FileStream);
-        await FSServer.SendTransfer(cidDictionary,activeTransfer,cancellationToken);
+        await FsServer.SendTransfer(cidDictionary,activeTransfer,cancellationToken);
         TransferActive = false;
         return;
     }
