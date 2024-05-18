@@ -18,7 +18,7 @@
     </ContentPage.Resources>
     <ContentPage.Content>
         <!-- margin l,t,r,b -->
-        <Grid Padding="{OnIdiom  '20,0,20,100', Phone='20,0,20,80'}" RowSpacing="10">
+        <Grid Padding="{OnIdiom  '20,0,20,100', Phone='10,0,10,50'}" RowSpacing="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="185" /> 
                 <RowDefinition Height="Auto" />
@@ -68,8 +68,11 @@
                         VerticalOptions="Fill"
                         />
                 
-                <VerticalStackLayout Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" x:Name="FileContainer">
-                </VerticalStackLayout>
+                <ScrollView Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2">
+                    <VerticalStackLayout  x:Name="FileContainer">
+                        <Label Text="TEST"></Label>
+                    </VerticalStackLayout>
+                </ScrollView>
 
                 
                 <VerticalStackLayout Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2">
