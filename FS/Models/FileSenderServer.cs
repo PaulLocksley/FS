@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -371,7 +372,57 @@ public class FileSenderServer
         }
     }
 
-    
+    public async Task<Stream> GetDownloadStream(string[] fileIds)
+    {
+        //todo: write a custom put implementation that lets me return a stream.
+        //or see if somebody else has had the same problem.
+        var queryParams = new Dictionary<string, string>();
+        var baseUrl = config.BaseUrl.Replace("rest.php", "download.php");
+        try
+        {
+            queryParams["remote_user"] = config.Username;
+            queryParams["timestamp"] = DateTimeOffset.Now.ToUnixTimeSeconds().ToString();
+            queryParams["transaction_id"] = Guid.NewGuid().ToString();
+            queryParams["files_ids"] = fileIds.Aggregate((x, y)=> $"{x},{y}");
+            if (fileIds.Length > 1)
+            {
+                queryParams["archive_format"] = "zip";
+            }
+
+            
+            var o = Flatten(queryParams);
+            var qs = o.Count > 0 ? o.Count == 1 ? o[0] : o.Aggregate((x, y) => $"{x}&{y}") : "";
+            Console.WriteLine(qs);
+            List<Byte> signedBytes = Encoding.ASCII.GetBytes(
+                $"get&{Regex.Replace(baseUrl, "https?://", "")}?{qs}").ToList();
+            
+            var binaryKey = Encoding.ASCII.GetBytes(config.Apikey); //this is fucked
+            using (var bKeyKey = new HMACSHA1(binaryKey))
+            {
+                var hashBytes = bKeyKey.ComputeHash(signedBytes.ToArray());
+                queryParams["signature"] = BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+            }
+
+            //
+            var handler = new HttpClientHandler();
+            var client = new HttpClient(handler);
+            client.BaseAddress = new Uri(baseUrl);
+            var queryString = HttpUtility.ParseQueryString(string.Empty);
+            foreach (var kvp in queryParams)
+            {
+                queryString[kvp.Key] = kvp.Value;
+            }
+
+            var url = $"{baseUrl}?{queryString}";
+            return await client.GetStreamAsync(url);
+
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine(e);
+            throw new Exception($"Failed to download file.\nInner Exception: {e.Message}");
+        }
+    }
 
     public Double getProgressPercent()
     {
