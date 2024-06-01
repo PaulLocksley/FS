@@ -6,13 +6,17 @@
     <ContentPage.Content>
         <Grid Margin="20" VerticalOptions="Fill" >
             <Grid.RowDefinitions>
-                <RowDefinition Height="20" />
+                <RowDefinition Height="50" />
                 <RowDefinition Height="*" />
+
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>     
-            <ListView Grid.Row="1"
+            <Button Grid.Row="0" Grid.Column="1" Text="Sort List" Clicked="SortTransfers"/> 
+
+            <ListView Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
                       ItemsSource="{Binding Transfers}"
                       ItemTapped="InspectTransfer" 
                       HasUnevenRows="true" 
@@ -28,6 +32,7 @@
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
+
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <!--

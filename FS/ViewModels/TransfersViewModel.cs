@@ -26,4 +26,16 @@ public partial class TransfersViewModel : ObservableObject
     {
         FSServer = fsServer;
     }
+
+    public void ReSort((TransferSortType sortType, bool desc)sortOptions)
+    {
+        IEnumerable<Transfer> sortedTransfers = sortOptions.sortType switch
+        {
+            TransferSortType.Creation => sortOptions.desc ? Transfers.OrderByDescending(x => x.Created.UnixTime) : Transfers.OrderBy(x => x.Created.UnixTime),
+            TransferSortType.Expiry => sortOptions.desc ? Transfers.OrderByDescending(x => x.Expiry.UnixTime) : Transfers.OrderBy(x => x.Expiry.UnixTime),
+            TransferSortType.Size => sortOptions.desc ? Transfers.OrderByDescending(x => x.FormatedTotalSizeNumeber) : Transfers.OrderBy(x => x.FormatedTotalSizeNumeber),
+            _ => Transfers
+        };
+        Transfers = sortedTransfers.ToArray();
+    }
 }

@@ -73,6 +73,13 @@ namespace FS.Models;
              return FileSize.getHumanFileSize(Files.Select(x => x.Size).Sum());
          }
      }
+     public long FormatedTotalSizeNumeber
+     {
+         get
+         {
+             return (Files.Select(x => x.Size).Sum());
+         }
+     }
  }
 
  public partial class TransferFile

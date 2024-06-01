@@ -19,6 +19,7 @@ public partial class TransfersView : ContentPage
         BindingContext = viewModel;
         Appearing += OnPageAppearing;
         Title = "Past Transfers";
+
     }
     
 
@@ -40,6 +41,24 @@ public partial class TransfersView : ContentPage
             //await Navigation.PushAsync(page);
         }
     }
-    
+
+    private async void SortTransfers(object sender, EventArgs e)
+    {        
+        
+        string action = await DisplayActionSheet("Sort List By:", "Cancel", null, 
+            "Created Date (Asc)", "Created Date (Desc)",
+            "Expiry Date (Asc)", "Expiry Date (Desc)",
+            "Transfer Size (Asc)", "Transfer Size (Desc)");
+        (TransferSortType sortType, bool desc) sortType = action switch
+        {
+            "Created Date (Asc)" => (TransferSortType.Creation,false),
+            "Created Date (Desc)" => (TransferSortType.Creation,true),
+            "Expiry Date (Asc)" => (TransferSortType.Expiry,false),
+            "Expiry Date (Desc)" => (TransferSortType.Expiry,true),
+            "Transfer Size (Asc)" => (TransferSortType.Size,false),
+            _ => (TransferSortType.Size,true)
+        };
+        viewModel.ReSort(sortType);
+    }
     
 }
