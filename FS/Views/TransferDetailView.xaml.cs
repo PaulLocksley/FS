@@ -32,7 +32,6 @@ public partial class TransferDetailView : ContentPage
     public async void SaveTransfer(object sender, EventArgs args)
     {
         Download(viewModel.Transfer.Files);
-        await Toast.Make($"Not implemented.").Show();
     }
 
     private async void Download(TransferFile[] files)
