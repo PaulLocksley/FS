@@ -1,6 +1,6 @@
 ﻿
 using System.Diagnostics;
-
+using CommunityToolkit.Maui.Alerts;
 using FS.ViewModels;
 
 namespace FS;
@@ -23,6 +23,12 @@ public partial class LoginView : ContentPage
             //b.Command = viewModel.testtttttCommand;
             serverList.Add(b);
         }
+
+        var customServer = new Button();
+        customServer.Text = "Enter Custom URL";
+        customServer.Clicked += SelectCustomServer;
+        serverList.Add(customServer);
+        
         serverList.Spacing = 10;
         var welcomeBanner = new Label();
         welcomeBanner.Text = "Select your server";
@@ -48,10 +54,29 @@ public partial class LoginView : ContentPage
 
     }
 
+    private async void SelectCustomServer(object sender, EventArgs e)
+    {
+        try
+        {
+            string result = await DisplayPromptAsync("Server Url", "What is the servers web address?");
+            var url = new UriBuilder(result).Uri;
+            NavigateToServer(url);
+        }
+        catch (Exception ex)
+        {
+            await Toast.Make($"Failed to navigate to custom server ${ex}").Show();
+        }
+    }
+
     private async void SelectedServer(object sender, EventArgs e)
     {
         System.Reflection.PropertyInfo pi = sender.GetType().GetProperty("CommandParameter");
         Uri address = (Uri)(pi.GetValue(sender, null));
+        NavigateToServer(address!);
+    }
+
+    private async void NavigateToServer(Uri address)
+    {
         MainThread.BeginInvokeOnMainThread(() =>
         {
             serverList.Children.Clear();
