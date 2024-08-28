@@ -1,6 +1,8 @@
 ﻿
 using System.Diagnostics;
 using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Markup;
+using FS.Models;
 using FS.ViewModels;
 
 namespace FS;
@@ -14,6 +16,7 @@ public partial class LoginView : ContentPage
     private LoginViewModel viewModel = new LoginViewModel();
     public LoginView()
     {
+        BindingContext = viewModel;
         foreach (var server in viewModel.DefaultPublicServers)
         {
             var b = new Button();
@@ -24,6 +27,10 @@ public partial class LoginView : ContentPage
             serverList.Add(b);
         }
 
+        var loginStateLabel = new Label
+        {
+            FontSize = 30,
+        }.Bind(Label.TextProperty, nameof(viewModel.LoginState));//, BindingMode.OneWay);
         var customServer = new Button();
         customServer.Text = "Enter Custom URL";
         customServer.Clicked += SelectCustomServer;
@@ -36,6 +43,7 @@ public partial class LoginView : ContentPage
         welcomeBanner.FontSize = 30;
         welcomeBanner.FontAttributes = FontAttributes.Bold;
         LoginViewStack.Children.Add(welcomeBanner);
+        LoginViewStack.Children.Add(loginStateLabel);
         LoginViewStack.Children.Add(serverList);
         Content = new Grid
         {
@@ -97,6 +105,7 @@ public partial class LoginView : ContentPage
     
     private async void YoinkConfigFromWebView(object sender, EventArgs e)
     {
+        viewModel.LoginState = "Waiting for Login...";
         //Wait for user to login.
         Debug.WriteLine("Starting yoink!");
         await Task.Delay(5000);
@@ -119,7 +128,7 @@ public partial class LoginView : ContentPage
 
 #endif
 
-
+                viewModel.LoginState = "Fetching API Token...";
                 Debug.WriteLine(loginCheckString);
                 if (loginCheckString is not null)
                 {
@@ -160,7 +169,7 @@ public partial class LoginView : ContentPage
             }
 
             await Task.Delay(100);
-
+            viewModel.LoginState = "Success, Saving API Token...";
             var allowed_keys = new string[] { "apikey", "username", "default_transfer_days_valid ", "base_url" };
             var apiKeySet = false;
             foreach (var line in fake_node_text.Split(new char[]{'\\','\n'}).Where(s => s.Contains('=')))
