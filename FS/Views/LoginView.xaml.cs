@@ -108,13 +108,13 @@ public partial class LoginView : ContentPage
         viewModel.LoginState = "Waiting for Login...";
         //Wait for user to login.
         Debug.WriteLine("Starting yoink!");
-        await Task.Delay(5000);
+        await Task.Delay(1500);
         try
         {
             string? loginCheckString = null;
             while (true)
             {
-                await Task.Delay(500);
+                await Task.Delay(250);
                 //This is gross https://github.com/dotnet/maui/issues/20288
 #if IOS || MACCATALYST
                 var resultios =
@@ -128,7 +128,6 @@ public partial class LoginView : ContentPage
 
 #endif
 
-                viewModel.LoginState = "Fetching API Token...";
                 Debug.WriteLine(loginCheckString);
                 if (loginCheckString is not null)
                 {
@@ -137,6 +136,7 @@ public partial class LoginView : ContentPage
             }
 
             //User is now logged in.
+            viewModel.LoginState = "Fetching API Token...";
             string settupConfigLocation =
                 "var temp = document.createElement('p');temp.id = 'fake_node';temp.innerText = 'init';temp.style.fontSize = '0px';document.body.appendChild(temp);\"\"";
             string getConfigJS = "fetch(window.location.href.split('?')[0]+'clidownload.php?config=1').then((response) => response.text()).then((text) => temp.innerText = (text));\"\"";
