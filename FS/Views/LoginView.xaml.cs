@@ -23,13 +23,14 @@ public partial class LoginView : ContentPage
             b.Text = server.Name;
             b.CommandParameter = server.Address;
             b.Clicked += SelectedServer;
-            //b.Command = viewModel.testtttttCommand;
             serverList.Add(b);
         }
 
         var loginStateLabel = new Label
         {
             FontSize = 30,
+            HorizontalTextAlignment = TextAlignment.Center,
+            FontAttributes = FontAttributes.Bold
         }.Bind(Label.TextProperty, nameof(viewModel.LoginState));//, BindingMode.OneWay);
         var customServer = new Button();
         customServer.Text = "Enter Custom URL";
@@ -42,7 +43,7 @@ public partial class LoginView : ContentPage
         welcomeBanner.HorizontalOptions = LayoutOptions.Center;
         welcomeBanner.FontSize = 30;
         welcomeBanner.FontAttributes = FontAttributes.Bold;
-        LoginViewStack.Children.Add(welcomeBanner);
+        //LoginViewStack.Children.Add(welcomeBanner);
         LoginViewStack.Children.Add(loginStateLabel);
         LoginViewStack.Children.Add(serverList);
         Content = new Grid
@@ -85,7 +86,8 @@ public partial class LoginView : ContentPage
 
     private async void NavigateToServer(Uri address)
     {
-        MainThread.BeginInvokeOnMainThread(() =>
+        
+        await MainThread.InvokeOnMainThreadAsync(() =>
         {
             serverList.Children.Clear();
             
@@ -93,7 +95,6 @@ public partial class LoginView : ContentPage
             LoginForm.HeightRequest = Window.Height;
             LoginForm.WidthRequest = Window.Width;
             serverList.Children.Add(LoginForm);
-
         });
         YoinkConfigFromWebView(null,null);
     }
@@ -114,7 +115,8 @@ public partial class LoginView : ContentPage
             string? loginCheckString = null;
             while (true)
             {
-                await Task.Delay(250);
+                viewModel.LoginState = viewModel.LoginState.Length > 20 ? "Waiting for Login" : viewModel.LoginState + ".";
+                await Task.Delay(500);
                 //This is gross https://github.com/dotnet/maui/issues/20288
 #if IOS || MACCATALYST
                 var resultios =
@@ -128,7 +130,6 @@ public partial class LoginView : ContentPage
 
 #endif
 
-                Debug.WriteLine(loginCheckString);
                 if (loginCheckString is not null)
                 {
                     break;
@@ -155,7 +156,8 @@ public partial class LoginView : ContentPage
             var fake_node_text = "init";
             while (fake_node_text == "init") // || kkk == "null")
             {
-                await Task.Delay(100);
+                viewModel.LoginState = viewModel.LoginState.Length > 22 ? "Fetching API Token" : viewModel.LoginState + ".";
+                await Task.Delay(500);
 
 #if IOS || MACCATALYST
                 var resultiostmp =
