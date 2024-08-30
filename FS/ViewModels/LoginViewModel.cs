@@ -11,20 +11,17 @@ public partial class LoginViewModel : ObservableObject
 {
     [ObservableProperty] private List<DefaultServer> defaultPublicServers;
 
+    [ObservableProperty]
+    private string loginState;
     public LoginViewModel()
     {
         defaultPublicServers = new List<DefaultServer>
         {
             new DefaultServer("AARnet FileSender", new Uri("https://filesender.edu.au")),
-            new DefaultServer("My Dev server", new Uri("https://fs.locksley.dev/filesender")),
+            new DefaultServer("My Dev server", new Uri("https://fs.locksley.dev/filesender/")),
         };
+            loginState = "Select Your Server";
 
     }
 
-
-    [RelayCommand]
-    private void testttttt(Uri address)
-    {
-        Debug.WriteLine($"A{address}");
-    }
 }
