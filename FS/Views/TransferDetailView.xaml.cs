@@ -48,18 +48,18 @@ public partial class TransferDetailView : ContentPage
     {
         try
         {
-        var request = await viewModel.FsServer.GetDownloadStream(files.Select(x => x.Id.ToString()).ToArray());
-        var tmpFileName = files.Length == 1 ? files[0].Name : $"{viewModel.Transfer.Subject ?? "Transfer"}.zip";
-        var fileSaverResult = await fileSaver.SaveAsync(tmpFileName, request);
-        fileSaverResult.EnsureSuccess();
-        await Toast.Make($"File is saved: {fileSaverResult.FilePath}").Show();
-    }
-    catch (Exception e)
-    {
-        await Toast.Make($"File failed to download").Show();
-        Debug.WriteLine("Failed to save file.");
-        Debug.WriteLine(e);
-    }
+            var request = await viewModel.FsServer.GetDownloadStream(files.Select(x => x.Id.ToString()).ToArray());
+            var tmpFileName = files.Length == 1 ? files[0].Name : $"{viewModel.Transfer.Subject ?? "Transfer"}.zip";
+            var fileSaverResult = await fileSaver.SaveAsync(tmpFileName, request);
+            fileSaverResult.EnsureSuccess();
+            await Toast.Make($"File is saved: {fileSaverResult.FilePath}").Show();
+        }
+        catch (Exception e)
+        {
+            await Toast.Make($"File failed to download").Show();
+            Debug.WriteLine("Failed to save file.");
+            Debug.WriteLine(e);
+        }
     }
     
     public async void ShowAuditLog(object sender, EventArgs args)

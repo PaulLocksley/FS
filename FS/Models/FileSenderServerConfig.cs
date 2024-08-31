@@ -13,6 +13,7 @@ public class FileSenderServerConfig(
     int workerRetries,
     int maxFilesCount,
     long maxTransferSize,
+    ServerEncryptionOptions? encryptionOptions,
     List<string> bannedFileTypes)
 {
     public string BaseUrl = baseUrl;
@@ -26,4 +27,5 @@ public class FileSenderServerConfig(
     public int MaxFilesCount = maxFilesCount;
     public long MaxTransferSize = maxTransferSize;
     public IList<string> BannedFileTypes = bannedFileTypes;
+    public ServerEncryptionOptions? EncryptionOptions = encryptionOptions;
 }
