@@ -100,13 +100,25 @@ public partial class CreateTransferViewModel : ObservableObject
     [RelayCommand]
     public void ValidateTransfer()
     {
-        IsValidTransferState = SelectedFiles.Count > 0 && ValidateRecipientFiled();
+        IsValidTransferState = SelectedFiles.Count > 0 && ValidateRecipientFiled() && ValidatePassword();
         return;
     }
 
-    [RelayCommand]
-    public void ValidatePassword()
+    public bool ValidatePassword()
     {
+        if(Password.Length == 0 || FsServer.config.EncryptionOptions is null)
+        {
+            return true;
+        }
+        
+        if ((FsServer.config.EncryptionOptions.PasswordNumbersRequired && Password.Any(char.IsNumber)) ||
+            (FsServer.config.EncryptionOptions.PasswordSpecialRequired && Password.Any(char.IsSymbol)) ||
+            (FsServer.config.EncryptionOptions.PasswordMixedCaseRequired && Password.Any(char.IsUpper) && Password.Any(char.IsLower)) || 
+            (Password.Length < FsServer.config.EncryptionOptions.PasswordMinLength))
+        {
+            return false;
+        }
+        return true;
     }
 
     private EmailAddressAttribute emailTool =  new EmailAddressAttribute();
