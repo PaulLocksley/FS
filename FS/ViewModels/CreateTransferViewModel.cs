@@ -37,15 +37,21 @@ public partial class CreateTransferViewModel : ObservableObject
     [ObservableProperty]
     private bool isValidTransferState;
 
+    [ObservableProperty]
+    private bool isInvalidPassword;
+    
+    [ObservableProperty]
+    private bool isInvalidEmails;
+    
     [ObservableProperty] 
     private DateTime transferExpiryDate;
     
     [ObservableProperty] 
-    public DateTime transferMinExpiryDate;
+    private DateTime transferMinExpiryDate;
     
     [ObservableProperty] 
-    public DateTime transferMaxExpiryDate;
-    
+    private DateTime transferMaxExpiryDate;
+
     [ObservableProperty] 
     public bool encryptionEnabled;
     
@@ -65,6 +71,8 @@ public partial class CreateTransferViewModel : ObservableObject
         TransferMaxExpiryDate = DateTime.Today + TimeSpan.FromDays(fsServer.config.MaxTransferDaysValid);
         TransferMinExpiryDate = DateTime.Now;
         TransferExpiryDate = DateTime.Now + TimeSpan.FromDays(fsServer.config.DefaultTransferDaysValid);
+        IsInvalidEmails = false;
+        IsInvalidPassword = false;
     }
 
 
@@ -85,10 +93,12 @@ public partial class CreateTransferViewModel : ObservableObject
     public async Task SendTransfer(CancellationToken cancellationToken)
     {
         TransferActive = true;
-
+        var transferOptions = new List<TransferOptions>();
         activeTransfer = await FsServer.CreateTransfer(Recipient.Replace(',',' ').Split(" "),
             Subject,
             Description,
+            password,
+            transferOptions,
             SelectedFiles.ToArray());
 
         var cidDictionary = SelectedFiles.ToDictionary(x => x.FileId, x => x.FileStream);
@@ -100,7 +110,9 @@ public partial class CreateTransferViewModel : ObservableObject
     [RelayCommand]
     public void ValidateTransfer()
     {
-        IsValidTransferState = SelectedFiles.Count > 0 && ValidateRecipientFiled() && ValidatePassword();
+        IsInvalidPassword = !ValidatePassword();
+        IsInvalidEmails = !ValidateRecipientFiled();
+        IsValidTransferState = SelectedFiles.Count > 0 &&  !IsInvalidEmails && !IsInvalidPassword;
         return;
     }
 
@@ -122,6 +134,6 @@ public partial class CreateTransferViewModel : ObservableObject
     private EmailAddressAttribute emailTool =  new EmailAddressAttribute();
     private bool ValidateRecipientFiled()
     {
-        return Recipient.Replace(',',' ').Split(" ").All(x => emailTool.IsValid(x));
+        return Recipient.Trim().Replace(',',' ').Split(" ").All(x => emailTool.IsValid(x));
     }
 }

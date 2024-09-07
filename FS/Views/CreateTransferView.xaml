@@ -3,6 +3,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:utl="clr-namespace:FS.Utilities"
              x:Class="FS.Views.CreateTransferView">
     <ContentPage.Resources>
         <Style x:Key="InvalidEntryStyle" TargetType="Entry">
@@ -13,6 +14,7 @@
         </Style>
         <ResourceDictionary>
             <toolkit:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <utl:BoolToFloatConverter x:Key="BoolToFloatConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
     <ContentPage.Content>
@@ -34,7 +36,14 @@
                    Source="astroman.png"
                    HeightRequest="185"
                    Aspect="AspectFit"
-                   SemanticProperties.Description="AstroMan" /> 
+                   SemanticProperties.Description="AstroMan" >
+                <Image.Shadow>
+                    <Shadow Brush="Black"
+                            Offset="20,20"
+                            Radius="20"
+                            Opacity="0.8" />
+                </Image.Shadow>
+            </Image> 
             <Grid Padding="{OnIdiom  '20,0,20,100', Phone='10,0,10,50'}" RowSpacing="10" Grid.Row="1" Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="45" />
@@ -47,7 +56,22 @@
                        Keyboard="Email"
                        Placeholder="Recipients Email/s ie: User1@example.com User2@example.com"
                        TextChanged="ValidateTranfer">
+                    <Entry.Style>
+                        <Style TargetType="Entry">
+                            <Setter Property="BackgroundColor" 
+                                    Value="{AppThemeBinding Light=WhiteSmoke, Dark=#1F1F1F}"></Setter>
+                            <Setter Property="TextColor" 
+                                    Value="{AppThemeBinding Light=Black, Dark=White}"></Setter>
+                        </Style>
+                    </Entry.Style>
+                    <Entry.Shadow>
+                        <Shadow Brush="Red"
+                                Offset="0,0"
+                                Opacity="{Binding IsInvalidEmails, Converter={StaticResource BoolToFloatConverter}}"
+                        ></Shadow>
+                    </Entry.Shadow>
                 </Entry>
+                
                 <Entry Grid.Row="1"
                        Text="{Binding Subject}"
                        Placeholder="Optional: Transfer subject"
@@ -79,12 +103,29 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Entry Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="0" Text="{Binding Password}"
+                       x:Name="PasswordEntry"
                        HorizontalOptions="Fill"
                        Placeholder="Optional: Password"
                        TextChanged="ValidateTranfer"
                        IsSpellCheckEnabled="False"
                        IsReadOnly="{Binding EncryptionEnabled}"
-                       ></Entry>
+                       IsVisible="{Binding EncryptionEnabled
+                            ,Converter={StaticResource InvertedBoolConverter}}">
+                    <Entry.Style>
+                        <Style TargetType="Entry">
+                            <Setter Property="BackgroundColor" 
+                                    Value="{AppThemeBinding Light=WhiteSmoke, Dark=#1F1F1F}"></Setter>
+                            <Setter Property="TextColor" 
+                                    Value="{AppThemeBinding Light=Black, Dark=White}"></Setter>
+                        </Style>
+                    </Entry.Style>
+                    <Entry.Shadow>
+                        <Shadow Brush="Red"
+                                Offset="0,0"
+                                Opacity="{Binding IsInvalidPassword, Converter={StaticResource BoolToFloatConverter}}"
+                                ></Shadow>
+                    </Entry.Shadow>
+                </Entry>
                     <Label Grid.Column="0" Grid.Row="1" Text="Expiry Date"></Label>
                     <DatePicker Grid.Column="1" Grid.Row="1" MinimumDate="{Binding TransferMinExpiryDate}"
                                 MaximumDate="{Binding TransferMaxExpiryDate}"

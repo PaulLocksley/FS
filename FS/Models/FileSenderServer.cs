@@ -156,8 +156,8 @@ public class FileSenderServer
         }
     }
 
-    public async Task<Transfer> CreateTransfer(string[] recepients, string subject, string message,
-        CreateTransferFile[] files)
+    public async Task<Transfer> CreateTransfer(string[] recipients, string subject, string message,
+        string password, IList<TransferOptions> transferOptions,CreateTransferFile[] files)
     {
         
         Debug.WriteLine($"starting test transfer");
@@ -184,7 +184,7 @@ public class FileSenderServer
         }
 
         transferContent["files"] = filesObject.ToArray();//;
-        transferContent["recipients"] = recepients;
+        transferContent["recipients"] = recipients;
         transferContent["subject"] = subject;
         transferContent["message"] = message;
         transferContent["expires"] = DateTimeOffset.UtcNow.AddDays(config.DefaultTransferDaysValid).ToUnixTimeSeconds();
@@ -194,6 +194,11 @@ public class FileSenderServer
         {
             ["get_a_link"] = 0
         };
+        foreach (var option in transferOptions)
+        {
+            optionsDict[option.ToString()] = 1;
+        }
+        
         transferContent["options"] = optionsDict;
 
         var createTransferCall = await Call(HttpVerb.Post, "/transfer", new Dictionary<string, string>(), transferContent, null,
