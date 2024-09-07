@@ -22,7 +22,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="185" /> 
                 <RowDefinition Height="*" />
-               
+                <RowDefinition Height="*" /> 
                 <RowDefinition Height="30" />
                 <RowDefinition Height="50" />
                 <RowDefinition Height="50" />
@@ -49,7 +49,6 @@
                     <RowDefinition Height="45" />
                     <RowDefinition Height="45" />
                     <RowDefinition Height="100" />
-                    <RowDefinition Height="*" /><!-- ** file container --> 
                 </Grid.RowDefinitions>
                 <Entry Grid.Row="0" Text="{Binding Recipient}"
                        HorizontalOptions="Fill"
@@ -85,10 +84,7 @@
                         Placeholder="Optional: Transfer Description"
                 />
             
-                <ScrollView Grid.Row="3" Grid.Column="0">
-                    <VerticalStackLayout  x:Name="FileContainer">
-                    </VerticalStackLayout>
-                </ScrollView> 
+                
             </Grid>
             
             <Grid Padding="{OnIdiom  '20,0,20,100', Phone='10,0,10,50'}" RowSpacing="10" Grid.Row="1" Grid.Column="1">
@@ -133,23 +129,27 @@
                                 HorizontalOptions="End"/>
             </Grid>
             
-
+            <ScrollView Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
+                <FlexLayout  x:Name="FileContainer"
+                             Wrap="Wrap">
+                </FlexLayout>
+            </ScrollView> 
             
-            <VerticalStackLayout Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
+            <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
                 <Label x:Name="CounterCount"></Label>
                 <ProgressBar Progress="0.0"
                              ProgressColor="Orange" 
                              x:Name="CounterProgress"/>
             </VerticalStackLayout>
-            <Button Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+            <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
                     x:Name="SelectFilesBtn"
                     Text="Add Files" 
                     SemanticProperties.Hint="Select Files to Include in Transfer"
                     Clicked="SelectFiles"
                     HorizontalOptions="Fill" />
-            <Label Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding TransferActive}"></Label>
+            <Label Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding TransferActive}"></Label>
 
-                <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                <Button Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
                         x:Name="SendFilesBtn"
                         Text="Send Transfer" 
                         SemanticProperties.Hint="Send the selected files"
@@ -159,7 +159,7 @@
                                     Converter={StaticResource InvertedBoolConverter}}"
                         IsEnabled="{Binding IsValidTransferState}"
                 />
-                <Button  Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Text="Cancel" 
+                <Button  Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Text="Cancel" 
                          Clicked="CancelTransfer"
                          IsVisible="{Binding TransferActive}"
                          BorderColor="Firebrick"

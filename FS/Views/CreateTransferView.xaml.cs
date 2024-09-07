@@ -96,6 +96,8 @@ public partial class CreateTransferView : ContentPage
         foreach (var file in viewModel.SelectedFiles)
         {
             var container = new HorizontalStackLayout();
+            container.HeightRequest = 60;
+            container.Margin = new Thickness(5,0);
             viewModel.FileListIndex[file.FullPath] = container.Id;
             container.AutomationId = container.Id.ToString();
             var name = new Label();
