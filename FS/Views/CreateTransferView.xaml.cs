@@ -197,4 +197,9 @@ public partial class CreateTransferView : ContentPage
     {
         viewModel.ValidateTransfer();
     }
+    
+    private void ValidatePassword(object? sender, TextChangedEventArgs e)
+    {
+        viewModel.ValidatePassword();
+    }
 }

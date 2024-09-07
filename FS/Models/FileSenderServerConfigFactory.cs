@@ -44,6 +44,10 @@ public static class FileSenderServerConfigFactory
         match = regex.Match(configText);
         int maxFilesCount = match.Success ? int.Parse(match.Groups[1].Value) : 1000;
 
+        regex = new Regex(@"max_transfer_days_valid\D*(\d+)");
+        match = regex.Match(configText);
+        int maxDaysValid = match.Success ? int.Parse(match.Groups[1].Value) : defaultTransferDaysValid;
+        
         regex = new Regex(@"max_transfer_size\D*(\d+)");
         match = regex.Match(configText);
         long maxTransferSize = match.Success ? long.Parse(match.Groups[1].Value) : 107374182400;
@@ -133,7 +137,7 @@ public static class FileSenderServerConfigFactory
             Debug.WriteLine($"Failed to capture encryption details: \n{e}");
         }
 
-        return new FileSenderServerConfig(baseUrl, username, apikey, chunkSize, siteName, defaultTransferDaysValid,
+        return new FileSenderServerConfig(baseUrl, username, apikey, chunkSize, siteName, defaultTransferDaysValid,maxDaysValid,
             workerCount, workerRetries, maxFilesCount, maxTransferSize,encryptionDetails,bannedFileTypes);
     }
 }

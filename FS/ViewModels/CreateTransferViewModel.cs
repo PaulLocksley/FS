@@ -31,20 +31,40 @@ public partial class CreateTransferViewModel : ObservableObject
     [ObservableProperty]
     private IDictionary<string, Guid> fileListIndex = new Dictionary<string, Guid>();
 
+    [ObservableProperty] 
+    private string password;
+    
     [ObservableProperty]
     private bool isValidTransferState;
+
+    [ObservableProperty] 
+    private DateTime transferExpiryDate;
+    
+    [ObservableProperty] 
+    public DateTime transferMinExpiryDate;
+    
+    [ObservableProperty] 
+    public DateTime transferMaxExpiryDate;
+    
+    [ObservableProperty] 
+    public bool encryptionEnabled;
     
     private Transfer? activeTransfer;
     public CancellationTokenSource TransferCancellationToken = new CancellationTokenSource();
     public CreateTransferViewModel(FileSenderServer fsServer)
     {
         FsServer = fsServer;
+        EncryptionEnabled = fsServer.config.EncryptionOptions is null;
+        Password = "";
         Recipient = "";
         Subject = "";
         Description = "";
         TransferActive = false;
         SelectedFiles = [];
         IsValidTransferState = false;
+        TransferMaxExpiryDate = DateTime.Today + TimeSpan.FromDays(fsServer.config.MaxTransferDaysValid);
+        TransferMinExpiryDate = DateTime.Now;
+        TransferExpiryDate = DateTime.Now + TimeSpan.FromDays(fsServer.config.DefaultTransferDaysValid);
     }
 
 
@@ -55,6 +75,7 @@ public partial class CreateTransferViewModel : ObservableObject
         TransferCancellationToken.Cancel();
     }
 
+    
     public void AddFile(CreateTransferFile file)
     {
         SelectedFiles.Add(file);
@@ -81,6 +102,11 @@ public partial class CreateTransferViewModel : ObservableObject
     {
         IsValidTransferState = SelectedFiles.Count > 0 && ValidateRecipientFiled();
         return;
+    }
+
+    [RelayCommand]
+    public void ValidatePassword()
+    {
     }
 
     private EmailAddressAttribute emailTool =  new EmailAddressAttribute();

@@ -405,6 +405,11 @@ public class FileSenderServer
 
             //
             var handler = new HttpClientHandler();
+#if DEBUG
+            handler.ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+#endif
+
             var client = new HttpClient(handler);
             client.BaseAddress = new Uri(baseUrl);
             var queryString = HttpUtility.ParseQueryString(string.Empty);

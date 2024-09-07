@@ -9,6 +9,7 @@ public class FileSenderServerConfig(
     int chunkSize,
     string siteName,
     int defaultTransferDaysValid,
+    int maxTransferDaysValid,
     int workerCount,
     int workerRetries,
     int maxFilesCount,
@@ -22,6 +23,7 @@ public class FileSenderServerConfig(
     public int ChunkSize = chunkSize;
     public string SiteName = siteName;
     public int DefaultTransferDaysValid = defaultTransferDaysValid;
+    public int MaxTransferDaysValid = maxTransferDaysValid;
     public int WorkerCount = workerCount;
     public int WorkerRetries = workerRetries;
     public int MaxFilesCount = maxFilesCount;
