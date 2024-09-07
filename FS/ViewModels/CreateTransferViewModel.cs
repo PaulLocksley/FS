@@ -111,14 +111,12 @@ public partial class CreateTransferViewModel : ObservableObject
             return true;
         }
         
-        if ((FsServer.config.EncryptionOptions.PasswordNumbersRequired && Password.Any(char.IsNumber)) ||
-            (FsServer.config.EncryptionOptions.PasswordSpecialRequired && Password.Any(char.IsSymbol)) ||
-            (FsServer.config.EncryptionOptions.PasswordMixedCaseRequired && Password.Any(char.IsUpper) && Password.Any(char.IsLower)) || 
-            (Password.Length < FsServer.config.EncryptionOptions.PasswordMinLength))
-        {
-            return false;
-        }
-        return true;
+        return !((FsServer.config.EncryptionOptions.PasswordNumbersRequired && !Password.Any(char.IsNumber)) ||
+                 (FsServer.config.EncryptionOptions.PasswordSpecialRequired &&
+                    !Password.Any(c => !char.IsNumber(c) && !char.IsLetter(c))) ||
+                 (FsServer.config.EncryptionOptions.PasswordMixedCaseRequired 
+                    && !(Password.Any(char.IsUpper) && Password.Any(char.IsLower))) ||
+                 (Password.Length < FsServer.config.EncryptionOptions.PasswordMinLength));
     }
 
     private EmailAddressAttribute emailTool =  new EmailAddressAttribute();
