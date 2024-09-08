@@ -270,7 +270,7 @@ public class FileSenderServer
             _currentCount = _initialCount;
             var key = new Rfc2898DeriveBytes(
                     Encoding.ASCII.GetBytes("!1TheTestPassword"), 
-                    Convert.FromBase64String(transferResponse.Salt), 
+                    Encoding.ASCII.GetBytes(transferResponse.Salt), 
                     config.EncryptionOptions!.PasswordHashIterations, //todo: change change change!!!!
                     HashAlgorithmName.SHA256) //todo: change change change!!!!
                 .GetBytes(256 / 8); //todo: change change change!!!
