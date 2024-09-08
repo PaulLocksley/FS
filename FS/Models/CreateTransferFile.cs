@@ -11,6 +11,9 @@ public class CreateTransferFile : IEquatable<CreateTransferFile>
     public string FileName { get; set; }
     public long FileSize { get; set; }
     public string FileId { get; set; }
+            
+    public byte[]? FileIV { get; set; }
+    public string? FileAead { get; set; }
 
     public CreateTransferFile(string mimeType, Task<Stream> fileStream, string fullPath, string fName, long fileSize, string fileId)
     {
@@ -20,6 +23,8 @@ public class CreateTransferFile : IEquatable<CreateTransferFile>
         FileName = fName;
         FileSize = fileSize;
         FileId = fileId;
+        FileIV = null;
+        FileAead = null;
     }
 
 

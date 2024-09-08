@@ -6,6 +6,9 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Web;
 using FS.Models;
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Modes;
+using Org.BouncyCastle.Crypto.Parameters;
 using Debug = System.Diagnostics.Debug;
 
 namespace FS;
@@ -157,66 +160,100 @@ public class FileSenderServer
     }
 
     public async Task<Transfer> CreateTransfer(string[] recipients, string subject, string message,
-        string password, IList<TransferOptions> transferOptions,CreateTransferFile[] files)
+         IList<TransferOptions> transferOptions,CreateTransferFile[] files)
     {
-        
-        Debug.WriteLine($"starting test transfer");
-        if (files.Length == 0)
+        try
         {
-            throw new InvalidDataException("Files list is empty, cannot create transfer");
-        }
+            Debug.WriteLine($"starting test transfer");
+            if (files.Length == 0)
+            {
+                throw new InvalidDataException("Files list is empty, cannot create transfer");
+            }
 
-        var transferContent = new Dictionary<string, object>();
-        transferContent["from"] = config.Username;
-        
-        var backTrace = new Dictionary<string, (string MimeType,Task<Stream> FileStream, String FullPath, String FileName, long FileSize)>();
-        
-        var filesObject = new List<Dictionary<string,string>>();
-        foreach (var f_info in files)
-        {
-            var tmpFile = new Dictionary<string, string>();
-            tmpFile["name"] = CleanFileName(f_info.FileName);
-            tmpFile["size"] = f_info.FileSize.ToString();
-            tmpFile["mime_type"] = f_info.MimeType;
+            var transferContent = new Dictionary<string, object>();
+            transferContent["from"] = config.Username;
 
-            tmpFile["cid"] = f_info.FileId;
-            filesObject.Add(tmpFile);
-        }
+            var backTrace =
+                new Dictionary<string, (string MimeType, Task<Stream> FileStream, String FullPath, String FileName, long
+                    FileSize)>();
 
-        transferContent["files"] = filesObject.ToArray();//;
-        transferContent["recipients"] = recipients;
-        transferContent["subject"] = subject;
-        transferContent["message"] = message;
-        transferContent["expires"] = DateTimeOffset.UtcNow.AddDays(config.DefaultTransferDaysValid).ToUnixTimeSeconds();
-        transferContent["aup_checked"] = 1;
-        
-        var optionsDict = new Dictionary<string, int>
-        {
-            ["get_a_link"] = 0
-        };
-        foreach (var option in transferOptions)
-        {
-            optionsDict[option.ToString()] = 1;
-        }
-        
-        transferContent["options"] = optionsDict;
+            var filesObject = new List<Dictionary<string, string>>();
+            foreach (var f_info in files)
+            {
+                var tmpFile = new Dictionary<string, string>();
+                tmpFile["name"] = CleanFileName(f_info.FileName);
+                tmpFile["size"] = f_info.FileSize.ToString();
+                tmpFile["mime_type"] = f_info.MimeType;
+                tmpFile["cid"] = f_info.FileId;
+                if (f_info.FileAead is not null)
+                {
+                    tmpFile["aead"] = Convert.ToBase64String(Encoding.ASCII.GetBytes(f_info.FileAead));
+                }
 
-        var createTransferCall = await Call(HttpVerb.Post, "/transfer", new Dictionary<string, string>(), transferContent, null,
-            new Dictionary<string, string>());
-        Debug.WriteLine($"Sent transfer request");
-        createTransferCall.EnsureSuccessStatusCode();
-        var transferResponseText = await createTransferCall.Content.ReadAsStringAsync();
-        Debug.WriteLine($"Transfer response {transferResponseText}");
-        
-        var transferResponse = JsonSerializer.Deserialize<Transfer>(transferResponseText);
-        if (transferResponse is null)
-        {
-            throw new ApplicationException("Server failed to validate transfer");
+                if (f_info.FileIV is not null)
+                {
+                    tmpFile["iv"] = Convert.ToBase64String(f_info.FileIV);
+                }
+
+                filesObject.Add(tmpFile);
+            }
+
+            transferContent["files"] = filesObject.ToArray(); //;
+            transferContent["recipients"] = recipients;
+            transferContent["subject"] = subject;
+            transferContent["message"] = message;
+            transferContent["expires"] =
+                DateTimeOffset.UtcNow.AddDays(config.DefaultTransferDaysValid).ToUnixTimeSeconds();
+            transferContent["aup_checked"] = 1;
+            if (files.First().FileAead is not null)
+            {
+                transferContent["encryption"] = true;
+                transferContent["encryption_key_version"] = config.EncryptionOptions!.CryptType switch
+                {
+                    SupportedCryptTypes.AESGCM => 3
+                };
+                transferContent["encryption_password_encoding"] = "none";
+                transferContent["encryption_password_version"] = "1";
+                transferContent["encryption_password_hash_iterations"] =
+                    config.EncryptionOptions.PasswordHashIterations;
+            }
+            
+            var optionsDict = new Dictionary<string, int>
+            {
+                ["get_a_link"] = 0,
+            };
+            
+            foreach (var option in transferOptions)
+            {
+                optionsDict[option.ToString()] = 1;
+            }
+
+            transferContent["options"] = optionsDict;
+
+            var createTransferCall = await Call(HttpVerb.Post, "/transfer", new Dictionary<string, string>(),
+                transferContent, null,
+                new Dictionary<string, string>());
+            Debug.WriteLine($"Sent transfer request");
+            createTransferCall.EnsureSuccessStatusCode();
+            var transferResponseText = await createTransferCall.Content.ReadAsStringAsync();
+            Debug.WriteLine($"Transfer response {transferResponseText}");
+
+            var transferResponse = JsonSerializer.Deserialize<Transfer>(transferResponseText);
+            if (transferResponse is null)
+            {
+                throw new ApplicationException("Server failed to validate transfer");
+            }
+
+            Debug.WriteLine($"Transfer obj {transferResponse}");
+            return transferResponse;
         }
-        Debug.WriteLine($"Transfer obj {transferResponse}");
-        return transferResponse;
+        catch (Exception e)
+        {
+            Debug.WriteLine($"Failed to create transfer: {e}");
+            throw;
+        }
     }
-    public async Task SendTransfer(IDictionary<string,Task<Stream>>files, Transfer transferResponse, CancellationToken cancellationToken)
+    public async Task SendTransfer(IDictionary<string,CreateTransferFile>files, Transfer transferResponse, CancellationToken cancellationToken)
     {
         cancellationToken.Register(() =>
         {
@@ -231,7 +268,12 @@ public class FileSenderServer
             _initialCount = transferResponse.Files.Aggregate(0,
                 (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize));
             _currentCount = _initialCount;
-
+            var key = new Rfc2898DeriveBytes(
+                    Encoding.ASCII.GetBytes("!1TheTestPassword"), 
+                    Convert.FromBase64String(transferResponse.Salt), 
+                    config.EncryptionOptions!.PasswordHashIterations, //todo: change change change!!!!
+                    HashAlgorithmName.SHA256) //todo: change change change!!!!
+                .GetBytes(256 / 8); //todo: change change change!!!
             foreach (var f in transferResponse.Files)
             {
                 for (long i = 0; i < f.Size; i += config.ChunkSize)
@@ -245,7 +287,7 @@ public class FileSenderServer
                         return;
                     }
                     ThreadPool.QueueUserWorkItem(SendChunk,
-                        new object[] { files[f.Cid], i, f, transferResponse.Roundtriptoken, cancellationToken });
+                        new object[] { files[f.Cid], i, f, transferResponse.Roundtriptoken, cancellationToken ,key});
                 }
             }
 
@@ -332,20 +374,23 @@ public class FileSenderServer
         try
         {
             object[] parameters = (object[])state;
-            Task<Stream> fileStream = (Task<Stream>)parameters[0];
+            CreateTransferFile file = (CreateTransferFile)parameters[0];
+            
             long offset = (long)parameters[1];
             TransferFile f = (TransferFile)parameters[2];
             string roundtriptoken = (string)parameters[3];
             CancellationToken cancellationToken = (CancellationToken)parameters[4];
+            byte[] key = (byte[])parameters[5];
+
             /*if (cancellationToken.IsCancellationRequested)
             {
                 return;
             }*/
             var f_content = new byte[config.ChunkSize];
 
-            lock (fileStream)
+            lock (file.FileStream)
             {
-                var readTask = fileStream.Result;
+                var readTask = file.FileStream.Result;
                 readTask.Seek(offset, 0);
                 var readSize = readTask.Read(f_content, 0, config.ChunkSize);
 
@@ -355,6 +400,26 @@ public class FileSenderServer
                 }
             }
 
+            if (file.FileIV is not null && file.FileAead is not null)
+            {
+                //todo: todo: this somewhere else based on enc type.
+                byte[] fullIv = new byte[file.FileIV.Length + 4];
+        
+                Buffer.BlockCopy(file.FileIV, 0, fullIv, 0, file.FileIV.Length);
+                Buffer.BlockCopy(BitConverter.GetBytes(offset/config.ChunkSize), 
+                    0, fullIv, file.FileIV.Length, 4); 
+                var aead = Encoding.ASCII.GetBytes(file.FileAead);
+                GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine());//new AesEngine());//AesFastEngine());
+                AeadParameters enc_parameters = new AeadParameters(new KeyParameter(key), 128, fullIv, aead);
+                cipher.Init(true, enc_parameters);
+
+                byte[] cipherText = new byte[cipher.GetOutputSize(f_content.Length)];
+                int len = cipher.ProcessBytes(f_content, 0, f_content.Length, cipherText, 0);
+                cipher.DoFinal(cipherText, len);
+                f_content = fullIv.Concat(cipherText).ToArray();
+            }
+            //todo: add encryption
+            
             var t = await Call(HttpVerb.Put,
                 $"/file/{f.Id}/chunk/{offset}",
                 new Dictionary<string, string>

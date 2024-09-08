@@ -1,6 +1,8 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FS.Models;
@@ -54,7 +56,8 @@ public partial class CreateTransferViewModel : ObservableObject
 
     [ObservableProperty] 
     public bool encryptionEnabled;
-    
+
+    private RandomNumberGenerator rng = RandomNumberGenerator.Create();
     private Transfer? activeTransfer;
     public CancellationTokenSource TransferCancellationToken = new CancellationTokenSource();
     public CreateTransferViewModel(FileSenderServer fsServer)
@@ -92,19 +95,44 @@ public partial class CreateTransferViewModel : ObservableObject
     
     public async Task SendTransfer(CancellationToken cancellationToken)
     {
-        TransferActive = true;
-        var transferOptions = new List<TransferOptions>();
-        activeTransfer = await FsServer.CreateTransfer(Recipient.Replace(',',' ').Split(" "),
-            Subject,
-            Description,
-            password,
-            transferOptions,
-            SelectedFiles.ToArray());
+        try
+        {
+            TransferActive = true;
+            if (Password != "")
+            {
+                foreach (var file in SelectedFiles)
+                {
+                    file.FileIV = new byte[FsServer.config.EncryptionOptions!.IvLength - 4];
+                    rng.GetBytes(file.FileIV);
+                    var encodedIv = Convert.ToBase64String(file.FileIV);
+                    file.FileAead = $$"""
+                                      {"aeadversion":1,
+                                      "chunkcount":{{(int)Math.Ceiling(file.FileSize / (double)FsServer.config.ChunkSize)}},
+                                      "chunksize":{{FsServer.config.ChunkSize}},
+                                      "iv":"{{encodedIv}}",
+                                      "aeadterminator":1}
+                                      """;
+                }
+            }
 
-        var cidDictionary = SelectedFiles.ToDictionary(x => x.FileId, x => x.FileStream);
-        await FsServer.SendTransfer(cidDictionary,activeTransfer,cancellationToken);
-        TransferActive = false;
-        return;
+            var transferOptions = new List<TransferOptions>();
+            activeTransfer = await FsServer.CreateTransfer(Recipient.Replace(',', ' ').Split(" "),
+                Subject,
+                Description,
+                transferOptions,
+                SelectedFiles.ToArray());
+
+            var cidDictionary = SelectedFiles.ToDictionary(x => x.FileId, x => x);
+            await FsServer.SendTransfer(cidDictionary, activeTransfer, cancellationToken);
+            TransferActive = false;
+            return;
+        }
+        catch (Exception e)
+        {
+            TransferActive = false;
+            Debug.WriteLine($"Failed to create transfer: {e}");
+            throw;
+        }
     }
     
     [RelayCommand]
