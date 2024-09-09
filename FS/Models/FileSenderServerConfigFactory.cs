@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Diagnostics;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FS.Models;
 
@@ -42,6 +44,10 @@ public static class FileSenderServerConfigFactory
         match = regex.Match(configText);
         int maxFilesCount = match.Success ? int.Parse(match.Groups[1].Value) : 1000;
 
+        regex = new Regex(@"max_transfer_days_valid\D*(\d+)");
+        match = regex.Match(configText);
+        int maxDaysValid = match.Success ? int.Parse(match.Groups[1].Value) : defaultTransferDaysValid;
+        
         regex = new Regex(@"max_transfer_size\D*(\d+)");
         match = regex.Match(configText);
         long maxTransferSize = match.Success ? long.Parse(match.Groups[1].Value) : 107374182400;
@@ -55,7 +61,7 @@ public static class FileSenderServerConfigFactory
         int chunkSize = match.Success
             ? int.Parse(match.Groups[1].Value)
             : throw new InvalidDataException("No chunk size provided");
-
+        
         var bannedFileTypes = new List<string>();
         regex = new Regex(@"ban_extension:\s*'(\S+)',");
         match = regex.Match(configText);
@@ -67,8 +73,68 @@ public static class FileSenderServerConfigFactory
                 bannedFileTypes.Add(extension);
             }
         }
+        ServerEncryptionOptions? encryptionDetails = new ServerEncryptionOptions();
+        try
+        {
+            regex = new Regex(@"encryption_password_must_have_upper_and_lower_case: (\w+)");
+            match = regex.Match(configText);
+            encryptionDetails.PasswordMixedCaseRequired =  match.Groups[1].Value == "true";
 
-        return new FileSenderServerConfig(baseUrl, username, apikey, chunkSize, siteName, defaultTransferDaysValid,
-            workerCount, workerRetries, maxFilesCount, maxTransferSize,bannedFileTypes);
+            // Example regex pattern for password_numbers_required
+            regex = new Regex(@"encryption_password_must_have_numbers: (\w+)");
+            match = regex.Match(configText);
+            encryptionDetails.PasswordNumbersRequired =  match.Groups[1].Value == "true";
+
+            // Example regex pattern for password_special_required
+            regex = new Regex(@"encryption_password_must_have_special_characters: (\w+)");
+            match = regex.Match(configText);
+            encryptionDetails.PasswordSpecialRequired = match.Groups[1].Value == "true";
+
+            // Example regex pattern for iv_len
+            regex = new Regex(@"crypto_iv_len\D+(\d+)");
+            match = regex.Match(configText);
+            encryptionDetails.IvLength =  int.Parse(match.Groups[1].Value);
+            
+            regex = new Regex(@"encryption_min_password_length\D+(\d+)");
+            match = regex.Match(configText);
+            encryptionDetails.PasswordMinLength = int.Parse(match.Groups[1].Value);
+            
+            // Example regex pattern for password_hash_iterations
+            regex = new Regex(@"encryption_password_hash_iterations_new_files\D+(\d+)");
+            match = regex.Match(configText);
+            encryptionDetails.PasswordHashIterations =  int.Parse(match.Groups[1].Value);
+
+            // Example regex pattern for crypt_type
+            regex = new Regex(@"crypto_crypt_name: '(.+)'");
+            match = regex.Match(configText);
+            SupportedCryptTypes cryptType =
+                (SupportedCryptTypes)Enum.Parse(typeof(SupportedCryptTypes), match.Groups[1].Value.Replace("-", ""));
+            encryptionDetails.CryptType = cryptType;
+
+            // Example regex pattern for hash_name
+            regex = new Regex(@"crypto_hash_name: '(.+)'");
+            match = regex.Match(configText);
+            SupportedHashTypes hashName = 
+                (SupportedHashTypes)Enum.Parse(typeof(SupportedHashTypes), match.Groups[1].Value.Replace("-", ""));
+            encryptionDetails.HashName = hashName;
+
+            // Example regex pattern for upload_chunk_base64_mode
+            regex = new Regex(@"encryption_encode_encrypted_chunks_in_base64_during_upload: (\w+)");
+            match = regex.Match(configText);
+            bool uploadChunkBase64Mode = match.Success && match.Groups[1].Value == "true";
+            encryptionDetails.UploadChunkBase64Mode = uploadChunkBase64Mode;
+            if(uploadChunkBase64Mode)
+            {   //todo.
+                throw (new NotImplementedException("UploadChunkBase64Mode is not implemented"));
+            }
+        }
+        catch (Exception e)
+        {
+            encryptionDetails = null;
+            Debug.WriteLine($"Failed to capture encryption details: \n{e}");
+        }
+
+        return new FileSenderServerConfig(baseUrl, username, apikey, chunkSize, siteName, defaultTransferDaysValid,maxDaysValid,
+            workerCount, workerRetries, maxFilesCount, maxTransferSize,encryptionDetails,bannedFileTypes);
     }
 }
