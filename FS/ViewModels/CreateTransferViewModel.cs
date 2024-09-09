@@ -98,6 +98,7 @@ public partial class CreateTransferViewModel : ObservableObject
         try
         {
             TransferActive = true;
+            var key = Array.Empty<byte>();
             if (Password != "")
             {
                 foreach (var file in SelectedFiles)
@@ -121,9 +122,23 @@ public partial class CreateTransferViewModel : ObservableObject
                 Description,
                 transferOptions,
                 SelectedFiles.ToArray());
+            
+            if (Password != "")
+            {
+                key = new Rfc2898DeriveBytes(
+                        Encoding.ASCII.GetBytes(Password),
+                        Encoding.ASCII.GetBytes(activeTransfer.Salt),
+                        FsServer.config.EncryptionOptions!.PasswordHashIterations, //todo: change change change!!!!
+                        FsServer.config.EncryptionOptions.HashName switch
+                        {
+                            SupportedHashTypes.SHA256 => HashAlgorithmName.SHA256,
+                            _ => throw new NotImplementedException()
+                        })
+                    .GetBytes(256 / 8);
+            }
 
             var cidDictionary = SelectedFiles.ToDictionary(x => x.FileId, x => x);
-            await FsServer.SendTransfer(cidDictionary, activeTransfer, cancellationToken);
+            await FsServer.SendTransfer(cidDictionary, activeTransfer, key, cancellationToken);
             TransferActive = false;
             return;
         }

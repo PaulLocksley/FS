@@ -253,7 +253,7 @@ public class FileSenderServer
             throw;
         }
     }
-    public async Task SendTransfer(IDictionary<string,CreateTransferFile>files, Transfer transferResponse, CancellationToken cancellationToken)
+    public async Task SendTransfer(IDictionary<string,CreateTransferFile>files, Transfer transferResponse,byte[] key, CancellationToken cancellationToken)
     {
         cancellationToken.Register(() =>
         {
@@ -268,12 +268,7 @@ public class FileSenderServer
             _initialCount = transferResponse.Files.Aggregate(0,
                 (i, f) => i + (int)Math.Ceiling(f.Size / (decimal)config.ChunkSize));
             _currentCount = _initialCount;
-            var key = new Rfc2898DeriveBytes(
-                    Encoding.ASCII.GetBytes("!1TheTestPassword"), 
-                    Encoding.ASCII.GetBytes(transferResponse.Salt), 
-                    config.EncryptionOptions!.PasswordHashIterations, //todo: change change change!!!!
-                    HashAlgorithmName.SHA256) //todo: change change change!!!!
-                .GetBytes(256 / 8); //todo: change change change!!!
+            
             foreach (var f in transferResponse.Files)
             {
                 for (long i = 0; i < f.Size; i += config.ChunkSize)
