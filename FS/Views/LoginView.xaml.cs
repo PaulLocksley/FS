@@ -140,7 +140,7 @@ public partial class LoginView : ContentPage
             viewModel.LoginState = "Fetching API Token...";
             string settupConfigLocation =
                 "var temp = document.createElement('p');temp.id = 'fake_node';temp.innerText = 'init';temp.style.fontSize = '0px';document.body.appendChild(temp);\"\"";
-            string getConfigJS = "fetch(window.location.href.split('?')[0]+'clidownload.php?config=1').then((response) => response.text()).then((text) => temp.innerText = (text));\"\"";
+            string getConfigJS = "fetch(window.location.href.split('?')[0]+'clidownload.php?config=1').then((response) => { if (response.ok){return response.text()}else{return fetch(window.location.href.split('?')[0]+'rest.php/user/@me/filesender-python-client-configuration-file').then((response) => response.text())}}).then((text) => temp.innerText = (text)); \"\"";
 #if IOS || MACCATALYST
             var tmp1 = await (LoginForm.Handler.PlatformView as WebKit.WKWebView).EvaluateJavaScriptAsync(settupConfigLocation);
             var tmp2 = await (LoginForm.Handler.PlatformView as WebKit.WKWebView).EvaluateJavaScriptAsync(getConfigJS);
