@@ -20,9 +20,10 @@
     <ContentPage.Content>
         <Grid Padding="{OnIdiom  '20,0,20,100', Phone='10,0,10,50'}" RowSpacing="10">
             <Grid.RowDefinitions>
-                <RowDefinition Height="185" /> 
+                <RowDefinition Height="{OnIdiom 185,Phone=0}"/> 
                 <RowDefinition Height="*" />
-                <RowDefinition Height="*" /> 
+                <RowDefinition Height="*" />
+                <RowDefinition Height="2*" /> 
                 <RowDefinition Height="30" />
                 <RowDefinition Height="50" />
                 <RowDefinition Height="50" />
@@ -35,6 +36,7 @@
             <Image Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
                    Source="astroman.png"
                    HeightRequest="185"
+                   IsVisible="{OnIdiom True,Phone=False}"
                    Aspect="AspectFit"
                    SemanticProperties.Description="AstroMan" >
                 <Image.Shadow>
@@ -44,11 +46,12 @@
                             Opacity="0.8" />
                 </Image.Shadow>
             </Image> 
-            <Grid Padding="{OnIdiom  '20,0,20,100', Phone='10,0,10,50'}" RowSpacing="10" Grid.Row="1" Grid.Column="0">
+            
+            <Grid Padding="{OnIdiom  '20,0,20,100', Phone='10,0,10,50'}" RowSpacing="10" Grid.Row="1" Grid.Column="0" Grid.RowSpan="{OnIdiom 2, Phone=1}" Grid.ColumnSpan="{OnIdiom 1,Phone=2}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="45" />
                     <RowDefinition Height="45" />
-                    <RowDefinition Height="100" />
+                    <RowDefinition Height="{OnIdiom 100, Phone=0}" />
                 </Grid.RowDefinitions>
                 <Entry Grid.Row="0" Text="{Binding Recipient}"
                        HorizontalOptions="Fill"
@@ -87,7 +90,7 @@
                 
             </Grid>
             
-            <Grid Padding="{OnIdiom  '20,0,20,100', Phone='10,0,10,50'}" RowSpacing="10" Grid.Row="1" Grid.Column="1">
+            <Grid Padding="{OnIdiom  '20,0,20,100', Phone='10,0,10,50'}" RowSpacing="10" Grid.Row="{OnIdiom 1,Phone=2}" Grid.RowSpan="{OnIdiom 2,Phone=1}" Grid.Column="{OnIdiom 1,Phone=0}" Grid.ColumnSpan="{OnIdiom 1,Phone=2}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="45" />
                     <RowDefinition Height="45" />
@@ -129,27 +132,27 @@
                                 HorizontalOptions="End"/>
             </Grid>
             
-            <ScrollView Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
+            <ScrollView Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
                 <FlexLayout  x:Name="FileContainer"
                              Wrap="Wrap">
                 </FlexLayout>
             </ScrollView> 
             
-            <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
+            <VerticalStackLayout Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2">
                 <Label x:Name="CounterCount"></Label>
                 <ProgressBar Progress="0.0"
                              ProgressColor="Orange" 
                              x:Name="CounterProgress"/>
             </VerticalStackLayout>
-            <Button Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+            <Button Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
                     x:Name="SelectFilesBtn"
                     Text="Add Files" 
                     SemanticProperties.Hint="Select Files to Include in Transfer"
                     Clicked="SelectFiles"
                     HorizontalOptions="Fill" />
-            <Label Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding TransferActive}"></Label>
+            <Label Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding TransferActive}"></Label>
 
-                <Button Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2"
+                <Button Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2"
                         x:Name="SendFilesBtn"
                         Text="Send Transfer" 
                         SemanticProperties.Hint="Send the selected files"
@@ -159,7 +162,7 @@
                                     Converter={StaticResource InvertedBoolConverter}}"
                         IsEnabled="{Binding IsValidTransferState}"
                 />
-                <Button  Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Text="Cancel" 
+                <Button  Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Text="Cancel" 
                          Clicked="CancelTransfer"
                          IsVisible="{Binding TransferActive}"
                          BorderColor="Firebrick"
