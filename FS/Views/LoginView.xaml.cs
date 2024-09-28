@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using CommunityToolkit.Maui.Alerts;
 using CommunityToolkit.Maui.Markup;
+using static CommunityToolkit.Maui.Markup.GridRowsColumns;
 using FS.Models;
 using FS.ViewModels;
 
@@ -10,7 +11,7 @@ namespace FS;
 [XamlCompilation(XamlCompilationOptions.Compile)]
 public partial class LoginView : ContentPage
 {
-    private VerticalStackLayout LoginViewStack = new VerticalStackLayout();
+    private Grid LoginViewGrid = new Grid();
     private WebView LoginForm = new WebView();
     private VerticalStackLayout serverList = new VerticalStackLayout();
     private LoginViewModel viewModel = new LoginViewModel();
@@ -21,45 +22,52 @@ public partial class LoginView : ContentPage
         {
             var b = new Button();
             b.Text = server.Name;
+            b.WidthRequest = 400;
             b.CommandParameter = server.Address;
             b.Clicked += SelectedServer;
             serverList.Add(b);
         }
 
+        var customServer = new Button();
+        customServer.Text = "Enter Custom URL";
+        customServer.WidthRequest = 400;
+        customServer.Clicked += SelectCustomServer;
+        serverList.Add(customServer);
+        
+        serverList.Spacing = 10;
+        
         var loginStateLabel = new Label
         {
             FontSize = 30,
             HorizontalTextAlignment = TextAlignment.Center,
             FontAttributes = FontAttributes.Bold
-        }.Bind(Label.TextProperty, nameof(viewModel.LoginState));//, BindingMode.OneWay);
-        var customServer = new Button();
-        customServer.Text = "Enter Custom URL";
-        customServer.Clicked += SelectCustomServer;
-        serverList.Add(customServer);
-        
-        serverList.Spacing = 10;
+        }.Bind(Label.TextProperty, nameof(viewModel.LoginState));
+
         var welcomeBanner = new Label();
         welcomeBanner.Text = "Select your server";
         welcomeBanner.HorizontalOptions = LayoutOptions.Center;
         welcomeBanner.FontSize = 30;
         welcomeBanner.FontAttributes = FontAttributes.Bold;
-        //LoginViewStack.Children.Add(welcomeBanner);
-        LoginViewStack.Children.Add(loginStateLabel);
-        LoginViewStack.Children.Add(serverList);
-        Content = new Grid
+        var serverListScrolView = new ScrollView
         {
+            Content  = serverList,
+            VerticalOptions = LayoutOptions.Fill,
+        };
+
+        LoginViewGrid = new Grid
+        {
+            RowDefinitions = Rows.Define(
+                (Row.Heading, 50),
+                (Row.Body, Star)),
             Children =
             {
-                LoginViewStack
-
+                loginStateLabel
+                    .Row(Row.Heading),
+                serverListScrolView.Row(Row.Body)
             }
         };
-        //InitializeComponent();
-        
-        //BindingContext = 
+        Content = LoginViewGrid;
 
-        //this.Appearing += OnPageAppearing;
-        
 
     }
 
@@ -212,13 +220,8 @@ public partial class LoginView : ContentPage
             }
             else
             {
-                var warning = new Label
-                {
-                    Text = "Could not get valid api key. Ensure your FileSender account has a Secret under 'My Profile'"
-
-                };
-                LoginViewStack.Children.Insert(0, warning);
-                LoginViewStack.Children.RemoveAt(1);
+                viewModel.LoginState =
+                    "Could not get valid api key. Ensure your FileSender account has a Secret under 'My Profile'";
             }
         }
         catch (Exception ee)
@@ -227,4 +230,6 @@ public partial class LoginView : ContentPage
         }
 
     }
+    
+    enum Row {Heading, Body}
 }
